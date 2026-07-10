@@ -1,6 +1,7 @@
 import { parseToolCalls } from './toolcall.js';
+import { needsCompaction, compact, countMessages } from './context.js';
 
-export async function runTurn({ provider, session, tools = {}, messages, userInput, signal, maxTurns = 25, onDelta }) {
+export async function runTurn({ provider, session, tools = {}, messages, userInput, signal, maxTurns = 25, onDelta, budget }) {
   messages.push({ role: 'user', content: userInput });
   session.append('user_message', { content: userInput });
   const toolNames = Object.keys(tools);
@@ -11,6 +12,15 @@ export async function runTurn({ provider, session, tools = {}, messages, userInp
 
   try {
     for (let turn = 0; turn < maxTurns; turn++) {
+      if (budget && needsCompaction(messages, budget)) {
+        const before = countMessages(messages);
+        const result = compact(messages, budget);
+        if (result.compacted) {
+          messages.length = 0;
+          messages.push(...result.messages);
+          session.append('compaction', { before, after: countMessages(messages), dropped: result.dropped });
+        }
+      }
       const assistant = await provider.chat({ messages, tools: toolSchemas(tools), signal, onDelta });
       session.append('assistant_message', { content: assistant.content, toolCalls: assistant.toolCalls });
       messages.push(assistant);

@@ -11,7 +11,7 @@ import { parseArgv } from '../src/cli.js';
 const BIN = join(dirname(fileURLToPath(import.meta.url)), '..', 'bin', 'kaku.js');
 
 test('parseArgv: no args → defaults', () => {
-  assert.deepEqual(parseArgv([]), { help: false, version: false, task: null, resume: null, cliFlags: {} });
+  assert.deepEqual(parseArgv([]), { help: false, version: false, command: null, task: null, resume: null, cliFlags: {} });
 });
 
 test('parseArgv: -p captures the task', () => {

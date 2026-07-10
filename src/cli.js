@@ -7,6 +7,7 @@ import { loadConfig, defaultPaths } from './config.js';
 import { EndpointError } from './provider.js';
 import { createAgent } from './agent.js';
 import { createDeltaRenderer } from './ui.js';
+import { runDoctor } from './doctor.js';
 import { showBanner } from './banner.js';
 import { createStatusBar } from './statusbar.js';
 import { countMessages } from './context.js';
@@ -16,6 +17,7 @@ const USAGE = `kaku — fully-local coding agent
 usage:
   kaku [flags]              interactive REPL
   kaku -p "task" [flags]    one-shot: run task, print result, exit
+  kaku doctor               check Node, Ollama and the model; prints exact fixes
 
 flags:
   -p <task>            one-shot task
@@ -30,10 +32,12 @@ flags:
 const VALUE_FLAGS = { '--model': 'model', '--mode': 'mode', '--permissions': 'permissions' };
 
 export function parseArgv(argv) {
-  const out = { help: false, version: false, task: null, resume: null, cliFlags: {} };
+  const out = { help: false, version: false, command: null, task: null, resume: null, cliFlags: {} };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
-    if (arg === '-h' || arg === '--help') {
+    if (arg === 'doctor' && out.command === null && i === 0) {
+      out.command = 'doctor';
+    } else if (arg === '-h' || arg === '--help') {
       out.help = true;
     } else if (arg === '--version') {
       out.version = true;
@@ -87,6 +91,8 @@ export async function main(argv = process.argv.slice(2), { cwd = process.cwd() }
     console.error(err.message);
     return 1;
   }
+
+  if (parsed.command === 'doctor') return runDoctor(config);
 
   const confirmRef = { fn: null };
   let agent;

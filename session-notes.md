@@ -46,4 +46,20 @@ Security highlights: edit enforces `old`-anchor uniqueness (Phase 0 binding rule
 
 Deferred to later phases: redaction-before-persist (P5), R1–R8 regex suite (P5), tiered tool exposure via profiles (P3), doom-loop guard (P3).
 
-**Next: Phase 3** — live brain: tiered system prompt, tool protocol (native + fenced-JSON fallback) + repair loop, endpoint-death handling. Gate: scripted e2e edit byte-exact ≤10 turns; repair fires exactly once on injected garbage; ollama killed mid-turn → clean exit + resumable session. First live-model phase — will warn before anything loads a model / eats RAM. Est 2h.
+## 2026-07-10 — Phase 3 complete (steps 1–4), model swapped to qwen3.5:4b
+
+Commits `b157b01..b733da7` (+ model swap `f951737`, size fix `8e1b77c`). Suite: **137 offline pass / 0 fail + 1 live (KAKU_LIVE=1)**.
+
+| Gate part | Proof |
+|---|---|
+| (a) scripted e2e edit byte-exact ≤10 turns | `test/e2e-live.test.js` LIVE: qwen3.5:4b, status=done, 8 turns, greet.js Hello→Hi byte-exact, 163s |
+| (b) repair fires exactly once on garbage | `test/protocol-loop.test.js` (mock, deterministic) |
+| (c) ollama death mid-turn → clean + resumable | `test/resilience.test.js` EndpointError→endpoint_error status, session intact |
+
+Built: `src/toolcall.js` (native + fenced-JSON + liberal normalization + repair signal), `src/prompt.js` (micro/full tiered, mode-aware, self-audit), `src/agent.js` (integration layer: provider+jail+tools+prompt+session+loop — CLI reuses it), loop.js repair loop + doom-loop guard, provider.js EndpointError + connection retry.
+
+**Live capability data (qwen3.5:4b, M1 8GB):** one-word edit took 8 turns / 7 tool calls / 163s. Converges only because the harness enforces read-before-edit + anchor uniqueness + repair + turn cap. This is the honest small-model signal — slow, needs guardrails, but reliable within budget.
+
+Deferred: stream-stall watchdog (>60s no-data) — process-kill = socket reset, already covered; profiles.js auto-detect probe (micro hardcoded for now); redaction R1–R8 (Phase 5).
+
+**Next: Phase 4** — context budget + compaction + session resume. Gate: 30-turn scripted session every request ≤ budget (asserted from request log), ≥1 compaction, state-carry probe answered, `--resume` continues. Mostly mock-testable. Est 1.5h.

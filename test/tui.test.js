@@ -2,7 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { setTimeout as sleep } from 'node:timers/promises';
 
-import { MASK, renderMaskRows, showBanner } from '../src/banner.js';
+import { MASK, renderMaskRows, renderGrid, showBanner } from '../src/banner.js';
+import { SPLASH, SMALL, TINY } from '../src/mask-data.js';
 import { NINJA_FRAMES, renderBar, createStatusBar } from '../src/statusbar.js';
 
 test('mask: every row 44 px, even row count, only palette chars, symmetric', () => {
@@ -23,10 +24,51 @@ test('renderMaskRows: one char row per two pixel rows, truecolor half-blocks', (
 
 test('showBanner: writes mask, title, version — no real delays needed', async () => {
   let out = '';
-  await showBanner({ write: (s) => (out += s) }, { version: '9.9.9', sleep: async () => {} });
+  await showBanner({ write: (s) => (out += s), columns: 100 }, { version: '9.9.9', sleep: async () => {} });
   assert.match(out, /K A K U M E I T E K I/);
   assert.match(out, /v9\.9\.9/);
   assert.match(out, /革命的/);
+  assert.match(out, /[▀▄]/, 'renders half-block mask');
+});
+
+for (const [name, grid] of [['SPLASH', SPLASH], ['SMALL', SMALL], ['TINY', TINY]]) {
+  test(`mask-data ${name}: valid grid — dims, chars, palette all consistent`, () => {
+    assert.equal(grid.rows.length, grid.h, 'row count = h');
+    assert.equal(grid.palette.length, grid.chars.length, 'one palette entry per char');
+    const allowed = new RegExp(`^[${grid.chars.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}.]+$`);
+    for (const row of grid.rows) {
+      assert.equal(row.length, grid.w, `row width = w: ${row}`);
+      assert.match(row, allowed, `only palette chars or '.': ${row}`);
+    }
+    for (const c of grid.palette) {
+      assert.equal(c.length, 3);
+      for (const v of c) assert.ok(Number.isInteger(v) && v >= 0 && v <= 255, `rgb 0..255: ${v}`);
+    }
+  });
+}
+
+test('renderGrid: truecolor emits 24-bit half-blocks; Apple_Terminal emits xterm-256 only', () => {
+  const tc = renderGrid(SMALL, { apple: false }).join('\n');
+  assert.equal(renderGrid(SMALL).length, SMALL.h / 2, 'one char row per two pixel rows');
+  assert.match(tc, /[▀▄]/, 'half-blocks present');
+  assert.match(tc, /\x1b\[38;2;\d+;\d+;\d+m/, 'truecolor fg');
+  const ap = renderGrid(SMALL, { apple: true }).join('\n');
+  assert.match(ap, /\x1b\[38;5;\d+m/, 'xterm-256 fg on Apple_Terminal');
+  assert.ok(!/\x1b\[38;2;/.test(ap), 'no truecolor leaks on Apple_Terminal');
+});
+
+test('showBanner: Apple_Terminal path uses xterm-256, no truecolor leak', async () => {
+  let out = '';
+  await showBanner({ write: (s) => (out += s), columns: 100 }, { version: '1.0', sleep: async () => {}, env: { TERM_PROGRAM: 'Apple_Terminal' } });
+  assert.match(out, /\x1b\[38;5;\d+m/, 'xterm-256 present');
+  assert.ok(!/\x1b\[38;2;/.test(out), 'no truecolor on Apple_Terminal (it mangles 38;2)');
+});
+
+test('showBanner: narrow terminal falls back from SPLASH to SMALL', async () => {
+  const rows = (cols) => { let n = 0; return { write: (s) => (n += (s.match(/\n/g) || []).length), columns: cols, get lines() { return n; } }; };
+  const wide = rows(100); await showBanner(wide, { sleep: async () => {} });
+  const narrow = rows(30); await showBanner(narrow, { sleep: async () => {} });
+  assert.ok(wide.lines > narrow.lines, 'wide renders the taller SPLASH, narrow the SMALL');
 });
 
 test('renderBar: shows name, model, mode, ctx%, ninja only when busy', () => {

@@ -17,6 +17,17 @@ import { createDeltaRenderer } from './ui.js';
 const MODE_ORDER = ['build', 'refactor', 'audit', 'plan'];
 const isWord = (c) => /\w/.test(c);
 
+// Input-box layout math, pure so it's testable. The +1 allocates the cell the cursor
+// occupies when it sits past the last character — without it, a line ending exactly at
+// the terminal edge computes one fewer row than the cursor needs and the cursor lands
+// on the bottom border. renderBox writes a trailing space so that row physically exists
+// (terminals defer the wrap until a character is actually written past the edge).
+export function boxLayout(lineLen, cursor, width, plen = 2) {
+  const rows = Math.max(1, Math.ceil((plen + lineLen + 1) / width));
+  const off = plen + cursor;
+  return { rows, cursorRow: Math.floor(off / width), cursorCol: off % width };
+}
+
 export async function runReplInteractive(agent, {
   input = process.stdin, output = process.stdout, errput = process.stderr,
   confirmRef = { fn: null }, config = {},
@@ -46,8 +57,8 @@ export async function runReplInteractive(agent, {
     };
   }
 
-  const inputRows = () => Math.max(1, Math.ceil((PLEN + line.length) / W()));
-  const curRowCol = () => { const off = PLEN + cursor, w = W(); return { row: Math.floor(off / w), col: off % w }; };
+  const inputRows = () => boxLayout(line.length, cursor, W(), PLEN).rows;
+  const curRowCol = () => { const l = boxLayout(line.length, cursor, W(), PLEN); return { row: l.cursorRow, col: l.cursorCol }; };
   const wordLeft = (p) => { while (p > 0 && !isWord(line[p - 1])) p--; while (p > 0 && isWord(line[p - 1])) p--; return p; };
   const wordRight = (p) => { const n = line.length; while (p < n && !isWord(line[p])) p++; while (p < n && isWord(line[p])) p++; return p; };
 
@@ -57,7 +68,7 @@ export async function runReplInteractive(agent, {
     moveToTop();
     output.write('\x1b[0J');
     const bar = `${DIM}${'─'.repeat(W())}${RESET}`;
-    output.write(`${bar}\n${renderPrompt()}${line}\n${bar}\n${renderStatusBar(statusState(), { width: W() })}`);
+    output.write(`${bar}\n${renderPrompt()}${line} \n${bar}\n${renderStatusBar(statusState(), { width: W() })}`);
     const lastRow = 1 + inputRows() + 1 + 1 - 1;
     const cur = curRowCol();
     const targetRow = 1 + cur.row;

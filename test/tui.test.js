@@ -4,6 +4,28 @@ import assert from 'node:assert/strict';
 import { renderGrid, showBanner, showWelcome } from '../src/banner.js';
 import { SPLASH, SMALL } from '../src/mask-data.js';
 import { renderStatusBar, gaugeColor, short, tildeCwd, MODE_META } from '../src/statusbar.js';
+import { boxLayout } from '../src/tui.js';
+
+test('boxLayout: rows and cursor position, including the exact-wrap boundary', () => {
+  // plain case: "❯ " + 10 chars on an 80-col terminal
+  assert.deepEqual(boxLayout(10, 10, 80), { rows: 1, cursorRow: 0, cursorCol: 12 });
+  // one short of the edge: still one row, cursor in the last column
+  assert.deepEqual(boxLayout(77, 77, 80), { rows: 1, cursorRow: 0, cursorCol: 79 });
+  // THE regression: line fills the row exactly — cursor needs a second row.
+  // Before the fix rows was ceil(80/80)=1 and the cursor landed on the bottom border.
+  assert.deepEqual(boxLayout(78, 78, 80), { rows: 2, cursorRow: 1, cursorCol: 0 });
+  // same line, cursor mid-text: stays on the first row
+  assert.deepEqual(boxLayout(78, 40, 80), { rows: 2, cursorRow: 0, cursorCol: 42 });
+  // two full rows
+  assert.deepEqual(boxLayout(158, 158, 80), { rows: 3, cursorRow: 2, cursorCol: 0 });
+  // empty line
+  assert.deepEqual(boxLayout(0, 0, 80), { rows: 1, cursorRow: 0, cursorCol: 2 });
+  // invariant: the cursor's row always exists in the allocated rows
+  for (let len = 0; len <= 200; len++) {
+    const l = boxLayout(len, len, 80);
+    assert.ok(l.cursorRow < l.rows, `cursor row allocated at len=${len}`);
+  }
+});
 
 test('showBanner: writes mask, title, version — no real delays needed', async () => {
   let out = '';

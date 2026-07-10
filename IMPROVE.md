@@ -145,6 +145,15 @@ on M1 8GB (~20s/turn = cold load + full-history reprocess + decode). Levers, ran
    3.5:4b becomes both the most capable AND acceptably fast pick on 8GB. Also: `keep_alive` avoids
    reload between turns; MLX backend −15-30%; q8 KV cache. Phase 4 compaction already keeps context
    small at runtime, complementing a lower num_ctx ceiling.
+
+   **TESTED 2026-07-10 (Phase 7 step 0) — hypothesis REFUTED.** Tasks 01/04/08 re-run at
+   num_ctx=4096: working set 6.0 GB (vs 6.1 GB @ 8192), still 33% CPU / 67% GPU, timings equal
+   or slower (41.3 / 295 / 109.2 s vs baseline avgs 36.5 / 280.6 / 70.3 s). The KV cache was
+   ~0.1 GB all along — the 6 GB is multimodal weights + runtime buffers, which exceed the
+   5.3 GB Metal ceiling at ANY context size. No num_ctx value can make qwen3.5:4b fit GPU on
+   8 GB. numCtx default stays 8192 (headroom is free). Remaining speed paths if wanted later:
+   text-only qwen3:4b (~2.6 GB, untested) as a middle ground, or qwen2.5-coder:3b (fits GPU,
+   5.5× faster, shallower) — see §6 multi-model routing.
 5. **Multi-model routing (★ later, see §6).** 1.5B for mechanical/search turns, escalate to
    4B+ for reasoning. Real win, needs eval data first so it's not a guess.
 6. **Deterministic fast-path (★ narrow).** A pure literal rename / single-string replace with

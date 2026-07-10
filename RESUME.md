@@ -55,15 +55,12 @@ PLAN.md TASTE.md IMPROVE.md RESUME.md   exist
   constraint, never lost a task coder:3b won.
 - **qwen2.5-coder:3b: 6/20** (avg 21.1s) — faster (fits GPU at 1.9GB), shallower.
 - Both 0/2 on fix-test, rename, edit-big-file = the hard ceiling of a ~3-4B local model.
-- **TOP LEVER TO TEST FIRST:** `ollama ps` showed 3.5:4b at 6.1GB @ num_ctx=8192 spilling 32% to CPU
-  (past the 5.3GB ceiling) — THAT is the slowness. Try `numCtx: 4096`: likely keeps it 100% GPU for
-  est 3-5x speedup. Quick win. Verify via `ollama ps` PROCESSOR column (any CPU% = spill).
+- **numCtx lever TESTED + DEAD (Phase 7 step 0, 2026-07-10):** at num_ctx=4096 the working set is
+  6.0GB (vs 6.1GB @ 8192) — KV was ~0.1GB all along; multimodal weights + buffers alone exceed the
+  5.3GB Metal ceiling. Still 33% CPU spill, timings equal/slower. numCtx stays 8192. Details in
+  IMPROVE.md §5b item 4.
 
 ## NEXT: Phase 7 (FINAL) — ship v1
-
-**Quick warm-up (optional, high value):** re-run a few eval tasks with `numCtx: 4096` on qwen3.5:4b,
-check `ollama ps` stays 100% GPU + measure speedup. If confirmed, set 4096 as the micro-tier default
-in agent.js (DEFAULT_MICRO_CTX) / config.
 
 **(a) Build the real CLI (`bin/kaku.js`)** — currently a stub. Needs:
 - argv parse (zero-dep): `-p "task"` one-shot; no `-p` = REPL. Flags `--model --mode --resume [id]

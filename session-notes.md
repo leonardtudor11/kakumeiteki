@@ -1,5 +1,23 @@
 # session notes
 
+## 2026-07-10 — Phase 2 complete (steps 1–6)
+
+Commits `975b293..f11a3a5` (+ spec commits `1a99e56`, `f7137d5`), suite: **106 pass / 0 fail**.
+
+| Gate requirement | Proof |
+|---|---|
+| tool unit tests green | 7 tools (read/write/edit/ls/glob/grep/bash), `test/tools-*.test.js` |
+| S1–S12 = 0 escapes | `test/jail.test.js` + prefix-collision extra; S9 corrected: macOS realpath doesn't case-fold → refuse (deny-by-default), PLAN updated |
+| classifier + controls = 0 false blocks | `test/classifier.test.js`: 36 deny attacks blocked in all modes, 14 controls pass |
+
+Key deliveries: realpath path jail; edit tool enforces old-anchor uniqueness (Phase 0 binding rule, regression on TASTE probe C fixture); secret deny-globs in read/write/edit/grep from birth; quote-aware command classifier (deny > ask > mutate > read-only, structural + full-text rules); bash tool classifier-gated w/ minimal env, cwd pin, group-kill on timeout/cap/abort.
+
+Hardenings beyond PLAN (all flagged in commits): plain `rm` outside jail → ask; `&`/newline/`()` as separators (no hiding attacks behind background/subshell); bash args touching secret files → ask (closes read-tool bypass); parent env stripped for bash children.
+
+Spec updates from owner: mode-aware verbosity + `plan` mode + post-task self-audit (PLAN behavior spec); domain playbooks incl. ops layer — auth/oauth, payments, resilience, scalability, RAG, secrets rotation (automated day-one), observability, operations/orchestration (IMPROVE.md Stage 1b).
+
+**Next: Phase 3** — live brain: tiered prompt, tool protocol + fenced-JSON repair, endpoint-death handling. Gate: scripted e2e edit byte-exact ≤10 turns; repair fires exactly once on injected garbage; ollama killed mid-turn → clean exit + resumable session. First step that touches a live model (RAM warning applies).
+
 ## 2026-07-10 — Phase 1 complete (steps 1–6)
 
 Commits `ad99973..3af0638`, suite: **37 pass / 0 fail**, zero deps, zero network in tests.
@@ -14,4 +32,18 @@ Built: `src/config.js`, `src/provider.js` (ollama-native adapter, per-request `n
 
 Deferred by design (per PLAN phases): openai-compat adapter (P3), doom-loop guard (P3), redaction-before-persist (P5), resume/compaction (P4), partial-text `partial:true` persistence (P3/4).
 
-**Next: Phase 2** — 7 tools + permission engine + path jail. Gate: tool unit tests green; S1–S12 = 0 escapes; classifier incl. control cases = 0 false blocks. Est 2h.
+## 2026-07-10 — Phase 2 complete (steps 1–5)
+
+Commits `975b293..f11a3a5` (+ spec sync `f7137d5`, MIT `2d452f2`, playbooks `1a99e56`). Suite: **106 pass / 0 fail**, zero deps, tests sandboxed (temp dirs, no network, no model).
+
+| Gate part | Proof |
+|---|---|
+| S1–S12 path jail, 0 escapes | `test/jail.test.js` — realpath jail + prefix-collision + deepest-existing-ancestor for writes; S9 corrected (macOS realpath does not case-fold → deny-by-default) |
+| 7 tools, unit-tested | read/write/edit (`test/tools-file.test.js`), ls/glob/grep (`test/tools-search.test.js`), bash (`test/tools-bash.test.js`) |
+| classifier: 36 deny attacks blocked all modes, 14 controls 0 false blocks | `test/classifier.test.js` |
+
+Security highlights: edit enforces `old`-anchor uniqueness (Phase 0 binding rule, regression-tested on probe C fixture); secret deny-globs in all file tools + bash args; bash minimal-env (parent secrets stripped), cwd-pinned, group-kill on timeout/cap/abort; ask-class needs explicit approval callback (absent/declined = not executed). Hardened beyond PLAN: plain `rm` outside jail → ask; `&`/newline/`()` are segment separators.
+
+Deferred to later phases: redaction-before-persist (P5), R1–R8 regex suite (P5), tiered tool exposure via profiles (P3), doom-loop guard (P3).
+
+**Next: Phase 3** — live brain: tiered system prompt, tool protocol (native + fenced-JSON fallback) + repair loop, endpoint-death handling. Gate: scripted e2e edit byte-exact ≤10 turns; repair fires exactly once on injected garbage; ollama killed mid-turn → clean exit + resumable session. First live-model phase — will warn before anything loads a model / eats RAM. Est 2h.

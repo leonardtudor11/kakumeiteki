@@ -7,6 +7,9 @@ import { loadConfig, defaultPaths } from './config.js';
 import { EndpointError } from './provider.js';
 import { createAgent } from './agent.js';
 import { createDeltaRenderer } from './ui.js';
+import { showBanner } from './banner.js';
+import { createStatusBar } from './statusbar.js';
+import { countMessages } from './context.js';
 
 const USAGE = `kaku — fully-local coding agent
 
@@ -104,7 +107,10 @@ export async function main(argv = process.argv.slice(2), { cwd = process.cwd() }
   for (const w of agent.warnings) console.error(`warning: ${w}`);
 
   if (parsed.task !== null) return runOnce(agent, parsed.task);
-  return runRepl(agent, { confirmRef });
+  if (process.stdout.isTTY && !process.env.KAKU_PLAIN && !process.env.NO_COLOR) {
+    await showBanner(process.stdout, { version: readVersion() });
+  }
+  return runRepl(agent, { confirmRef, config });
 }
 
 async function runOnce(agent, task) {
@@ -122,8 +128,19 @@ export async function runRepl(agent, {
   output = process.stdout,
   errput = process.stderr,
   confirmRef = { fn: null },
+  config = {},
 } = {}) {
   const rl = readline.createInterface({ input, output });
+  const bar = createStatusBar({
+    output,
+    getCtxPct: () => {
+      const input_ = agent.budget?.input;
+      if (!input_) return 0;
+      return Math.min(100, Math.round((countMessages(agent.messages ?? []) / input_) * 100));
+    },
+  });
+  bar.start();
+  bar.setState({ model: config.model ?? '', mode: config.mode ?? '' });
   let abort = null;
   let questionAbort = null;
   let exiting = false;
@@ -168,7 +185,9 @@ export async function runRepl(agent, {
 
       abort = new AbortController();
       const renderer = createDeltaRenderer((s) => output.write(s));
+      bar.setState({ busy: true });
       const res = await agent.run(task, { signal: abort.signal, onDelta: (t) => renderer.push(t) });
+      bar.setState({ busy: false });
       abort = null;
       renderer.flush();
       output.write('\n');
@@ -177,6 +196,7 @@ export async function runRepl(agent, {
   } finally {
     process.removeListener('SIGINT', onInterrupt);
     confirmRef.fn = null;
+    bar.stop();
     rl.close();
   }
   return 0;

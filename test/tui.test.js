@@ -1,0 +1,100 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { setTimeout as sleep } from 'node:timers/promises';
+
+import { MASK, renderMaskRows, showBanner } from '../src/banner.js';
+import { NINJA_FRAMES, renderBar, createStatusBar } from '../src/statusbar.js';
+
+test('mask: every row 25 px, even row count, only palette chars, symmetric', () => {
+  assert.equal(MASK.length % 2, 0);
+  for (const row of MASK) {
+    assert.equal(row.length, 25, row);
+    assert.match(row, /^[.GRrSsW]+$/, row);
+    assert.equal(row, [...row].reverse().join(''), `asymmetric: ${row}`);
+  }
+});
+
+test('renderMaskRows: one char row per two pixel rows, truecolor half-blocks', () => {
+  const rows = renderMaskRows();
+  assert.equal(rows.length, MASK.length / 2);
+  assert.ok(rows.every((r) => /[▀▄ ]/.test(r)));
+  assert.match(rows[0], /\x1b\[38;2;212;175;55m/, 'horn gold present');
+});
+
+test('showBanner: writes mask, title, version — no real delays needed', async () => {
+  let out = '';
+  await showBanner({ write: (s) => (out += s) }, { version: '9.9.9', sleep: async () => {} });
+  assert.match(out, /K A K U M E I T E K I/);
+  assert.match(out, /v9\.9\.9/);
+  assert.match(out, /革命的/);
+});
+
+test('renderBar: shows name, model, mode, ctx%, ninja only when busy', () => {
+  const idle = renderBar({ model: 'qwen3.5:4b', mode: 'build', ctxPct: 38, busy: false }, 100);
+  assert.match(idle, /KAKUMEITEKI/);
+  assert.match(idle, /qwen3\.5:4b/);
+  assert.match(idle, /build/);
+  assert.match(idle, /ctx 38%/);
+  assert.ok(!idle.includes('🥷'));
+  const busy = renderBar({ model: 'm', mode: 'build', ctxPct: 1, busy: true, frame: 1 }, 100);
+  assert.ok(busy.includes('🥷'));
+  assert.match(busy, /working/);
+});
+
+test('statusbar: fully inert on non-TTY output', () => {
+  let writes = 0;
+  const bar = createStatusBar({ output: { write: () => writes++ }, env: {} });
+  assert.equal(bar.enabled, false);
+  bar.start();
+  bar.setState({ model: 'x', busy: true });
+  bar.setState({ busy: false });
+  bar.stop();
+  assert.equal(writes, 0);
+});
+
+test('statusbar: KAKU_PLAIN disables even on TTY', () => {
+  const out = { isTTY: true, rows: 30, columns: 80, write: () => {} };
+  assert.equal(createStatusBar({ output: out, env: { KAKU_PLAIN: '1' } }).enabled, false);
+});
+
+function fakeTty() {
+  const listeners = {};
+  return {
+    isTTY: true,
+    rows: 30,
+    columns: 80,
+    buf: '',
+    write(s) { this.buf += s; },
+    on(ev, fn) { listeners[ev] = fn; },
+    removeListener(ev) { delete listeners[ev]; },
+    emit(ev) { listeners[ev]?.(); },
+  };
+}
+
+test('statusbar: scroll region on start, bar content on setState, reset on stop', () => {
+  const out = fakeTty();
+  const bar = createStatusBar({ output: out, env: {}, getCtxPct: () => 42 });
+  bar.start();
+  assert.match(out.buf, /\x1b\[1;29r/, 'scroll region rows 1..rows-1');
+  bar.setState({ model: 'qwen3.5:4b', mode: 'audit' });
+  assert.match(out.buf, /\x1b\[30;1H/, 'draws on last row');
+  assert.match(out.buf, /qwen3\.5:4b/);
+  assert.match(out.buf, /ctx 42%/);
+  bar.stop();
+  assert.match(out.buf, /\x1b\[r/, 'scroll region reset');
+});
+
+test('statusbar: busy animates ninja frames, idle stops them', async () => {
+  const out = fakeTty();
+  const bar = createStatusBar({ output: out, env: {}, intervalMs: 20 });
+  bar.start();
+  bar.setState({ model: 'm', mode: 'build', busy: true });
+  await sleep(90);
+  bar.setState({ busy: false });
+  const frames = NINJA_FRAMES.filter((f) => f.trim()).some((f) => out.buf.includes(f.trim()));
+  assert.ok(frames, 'ninja appeared during busy');
+  const len = out.buf.length;
+  await sleep(60);
+  assert.equal(out.buf.length, len, 'no redraws after idle');
+  bar.stop();
+});

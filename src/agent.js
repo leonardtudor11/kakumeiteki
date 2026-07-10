@@ -34,7 +34,7 @@ export async function createAgent(config, { cwd = process.cwd(), sessionDir, con
     if (header.model && header.model !== config.model) warnings.push(`session was ${header.model}, now using ${config.model}`);
     if (header.tier && header.tier !== tier) warnings.push(`session tier was ${header.tier}, now ${tier}`);
     messages = [{ role: 'system', content: system }, ...history];
-    if (needsCompaction(messages, budget)) compact(messages, budget);
+    if (needsCompaction(messages, budget)) messages = compact(messages, budget).messages;
     session = reopenSession(path);
     session.append('resumed', { from: path, restored: history.length, warnings });
   } else {

@@ -5,6 +5,9 @@ export async function runTurn({ provider, session, tools = {}, messages, userInp
   session.append('user_message', { content: userInput });
   const toolNames = Object.keys(tools);
   let awaitingRepair = false;
+  let lastSig = null;
+  let sameCount = 0;
+  let nudged = false;
 
   try {
     for (let turn = 0; turn < maxTurns; turn++) {
@@ -29,6 +32,24 @@ export async function runTurn({ provider, session, tools = {}, messages, userInp
 
       if (!calls.length) return { status: 'done', message: assistant };
 
+      const sig = JSON.stringify(calls.map((c) => [c.name, c.args]));
+      if (sig === lastSig) sameCount++;
+      else { lastSig = sig; sameCount = 1; nudged = false; }
+
+      if (sameCount >= 3) {
+        if (nudged) {
+          session.append('doom_loop', { signature: sig });
+          return { status: 'doom_loop' };
+        }
+        nudged = true;
+        session.append('doom_nudge', { signature: sig });
+        messages.push({
+          role: 'user',
+          content: '[loop guard] You have repeated the same tool call 3 times with no progress. Stop and try a different approach; if you are stuck, give your best final answer as plain text.',
+        });
+        continue;
+      }
+
       for (const call of calls) {
         session.append('tool_call', { name: call.name, args: call.args });
         const result = await executeTool(tools, call, signal);
@@ -40,6 +61,10 @@ export async function runTurn({ provider, session, tools = {}, messages, userInp
     if (err.name === 'AbortError') {
       session.append('cancelled', {});
       return { status: 'cancelled' };
+    }
+    if (err.name === 'EndpointError') {
+      session.append('endpoint_error', { message: err.message });
+      return { status: 'endpoint_error', error: err.message };
     }
     throw err;
   }

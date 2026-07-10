@@ -23,6 +23,8 @@ this file is the readable spec. If you change one, change both.
 7. **Security-first.** Flag issues noticed in passing even when unasked. Never read
    secret files (deny-globs), never emit secrets (redaction), never run outside the
    jail.
+8. **Stop when the success check passes.** No re-reading or re-verifying after
+   confirmation — trailing "one more check" turns burn time and context for nothing.
 
 ## Modes
 

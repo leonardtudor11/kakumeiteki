@@ -22,7 +22,8 @@ Then, inside any project directory:
 
 ```bash
 kaku                      # interactive REPL (samurai banner, live status bar)
-kaku -p "add input validation to server.js"   # one-shot: do the task, print, exit
+kaku -p "explain what server.js does"                    # one-shot: task, print, exit
+kaku -p "in greet.js rename the greet function to hello" # single-file edits work well
 ```
 
 Don't have Ollama? Install it from [ollama.com](https://ollama.com), start the app
@@ -33,13 +34,15 @@ Don't have Ollama? Install it from [ollama.com](https://ollama.com), start the a
 - **REPL** with a pixel samurai banner, a bottom status bar (model · mode · live
   context %), and a ninja that peeks while the agent works.
 - **One-shot mode** (`-p`) for scripts and pipes — plain output, exit code 0/1.
-- **Built-in engineering playbooks**: the agent consults cited decision guides (auth,
-  payments, resilience, scalability, RAG, secrets, observability, operations, security)
-  before designing in those domains — architecture and deploy advice grounded in OWASP,
-  Google SRE, AWS Well-Architected and the RFCs, not vibes. Ask it to *plan* a feature
-  (`--mode plan`) and it reads the relevant playbook first.
-- **File preloading**: name a file in your task and its content rides along — the model
-  skips the read round-trip (secret files always excluded).
+- **Built-in engineering playbooks**: cited decision guides (auth, payments, resilience,
+  scalability, RAG, secrets, observability, operations, security) grounded in OWASP,
+  Google SRE, AWS Well-Architected and the RFCs — served by the built-in `skill` tool.
+  Honest usage note for small models: **name the playbook in your prompt**
+  (`kaku --mode plan -p "consult the payments playbook, then plan Stripe checkout"`) —
+  measured live, that produces a plan grounded in the cited rules; left to discover the
+  playbook on its own, a 4B model tends to wander. Bigger models need less steering.
+- **File preloading**: name a file in your task and its content rides along (secret
+  files always excluded), so the model can skip the read round-trip.
 - **Sessions**: every run is an append-only JSONL transcript. `kaku --continue` resumes
   the latest session for the directory; `kaku --resume <id>` picks one. Crash-safe.
 - **Cancel**: Ctrl-C once cancels the turn, twice exits. Always resumable.
@@ -65,6 +68,27 @@ typos can't silently do nothing.
 ```json
 { "model": "qwen2.5-coder:3b", "mode": "build", "permissions": "safe", "maxTurns": 25 }
 ```
+
+## What to honestly expect from a 3–4B local model
+
+Measured on the built-in eval suite (10 script-checked tasks, no judgment calls —
+`eval/scorecard.md`), on an M1 8 GB:
+
+**Reliable:** read code and answer questions about it · find definitions and usages ·
+list/explore project structure · follow output constraints · a single precise edit in a
+small file (works, not guaranteed — verify the diff) · consult a playbook you name and
+apply it to a plan.
+
+**Not reliable at this size — don't pretend otherwise:** fixing a failing test ·
+renaming across multiple files · edits deep inside large files · any multi-step task
+that requires holding a plan across many tool calls. Both tested models scored 0/2 on
+each of these.
+
+The harness is what makes the reliable list reliable (forced read-before-edit, unique
+edit anchors, repair loops, honest failure statuses) — it cannot add reasoning the model
+doesn't have. When a task fails, kaku says so (`turn_cap`, `doom_loop`, …) instead of
+pretending. Judge any new model with `node eval/scorecard.js` and trust the table, not
+the vibes.
 
 ## Which model?
 

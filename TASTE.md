@@ -88,10 +88,14 @@ old must appear exactly once in the file.
 
 | Probe | qwen2.5-coder:3b | qwen3:1.7b |
 |---|---|---|
-| A — function per spec | | |
-| B — find the bug | | |
-| C — exact-string edit | | |
+| A — function per spec | FAIL (4/5 — trailing hyphen survives: `"foo-bar-"`) | FAIL (4/5 — leading AND trailing survive: `"-foo-bar-"`) |
+| B — find the bug | PASS (named `i <= orders.length`, out-of-bounds `.amount`) | PASS (same, correct) |
+| C — exact-string edit | FAIL (`old: "getData"` — occurs 4×, not unique; would also rename `getDataTwice`) | FAIL (identical answer, identical flaw; its own reasoning even asserted "appears once" — wrong) |
 
-**Verdict:** _pending_
+**Verdict:** `qwen2.5-coder:3b` adopted as default model — wins on tiebreakers, not on score.
 
-Notes worth recording: response speed (seconds), any instruction-following drift (extra prose when told code-only), fence/JSON discipline.
+- Strict score is a 1/3 tie. Tiebreakers all favor coder:3b: ~2× faster wall-clock (probe C: 4 s vs 9 s), no chain-of-thought flooding (qwen3 emits hundreds of lines of `Thinking...` per probe — poison for context budget), better instruction discipline (qwen3 broke "two sentences max" on B; both fenced code despite "only the code", fences alone not a fail per criteria).
+- JSON discipline on C: both returned clean parseable JSON. The failure is *reasoning about uniqueness*, not formatting.
+- **Design consequence (the real Phase 0 payoff):** neither model can produce a unique exact-match anchor unaided. The harness edit tool must verify `old` uniqueness itself and drive the repair loop with the violation ("occurs 4×, widen the anchor") — already in PLAN.md as the fenced-protocol repair loop; Phase 2/3 must treat uniqueness verification as a hard gate, not an optional nicety. Probe A shows edge-case blindness (boundary hyphens) — success criteria in eval tasks must include boundary cases, never happy-path only.
+
+Run conditions: M1 8 GB, Ollama, one model resident at a time, 2026-07-10.

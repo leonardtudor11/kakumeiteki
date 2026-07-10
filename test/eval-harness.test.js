@@ -84,13 +84,13 @@ test('runSuite + renderScorecard: multi-run table with pass count and per-task r
     return 'alpha.js and beta.js on port 8080';
   });
   const results = await runSuite(TASKS, { config, runs: 2, makeAgent, now });
-  assert.equal(results.length, 6); // 3 tasks × 2 runs
+  assert.equal(results.length, TASKS.length * 2);
   assert.ok(results.every((r) => r.run === 1 || r.run === 2));
 
   const md = renderScorecard(results, { model: 'mock', generatedAt: '2026-07-10' });
   assert.match(md, /# Eval scorecard/);
   assert.match(md, /Model: `mock`/);
   assert.match(md, /\| 01-hello-tool \|/);
-  assert.match(md, /\d+\/6 passed/);
+  assert.match(md, new RegExp(`\\d+/${TASKS.length * 2} passed`));
   assert.match(md, /avg .*s\/task/);
 });

@@ -36,8 +36,10 @@ Run: `npm test` (bare `node --test`, offline) · `node eval/scorecard.js` (loads
 ## Execution rules (KEEP DOING)
 - ultraplan drip: ONE step at a time (prereq → do → verify → rollback), wait for "go".
 - git commit per step via `git commit -F -` heredoc (zsh eats ``` in -m).
-- Before every push: sensitive sweep (`git grep -iE "__LOCAL_HOME__|yahoo|@gmail|ghp_[a-z]|tailscale|164\.90|100\.103"`
-  over the diff) + committer = noreply. Push standing-approved for this repo.
+- Before every push: sensitive sweep over the diff (grep for the owner's local home path,
+  personal email domains, `ghp_` tokens, and private infra hostnames/IPs — the exact
+  pattern lives in the owner's local notes, not here) + committer = noreply. Push
+  standing-approved for this repo.
 - Live tests behind `KAKU_LIVE=1`; clean /tmp/kaku-eval-sessions after eval runs.
 - Update session-notes.md + .claude/learning-log.md at close. `.claude/` + session-notes
   are local-only (gitignored).

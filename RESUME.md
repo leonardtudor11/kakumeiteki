@@ -53,7 +53,7 @@ Run: `npm test` (bare `node --test`, offline) · `node eval/scorecard.js` (loads
 - Terminal.app fakes truecolor; iTerm2 renders the banner properly. KAKU_PLAIN=1 opts out.
 - Small models can't judge edit-anchor uniqueness — the edit tool enforces it (TASTE.md).
 
-## Owner (the owner) preferences that shaped this
+## Owner preferences that shaped this
 - "do then talk" = mode-aware terseness, NOT action-before-consult.
 - Awesome + free-to-copy (MIT), zero personal peril: no payment/auth/telemetry INSIDE the
   tool; it may KNOW about those domains via doctrine (IMPROVE.md §5.1b).

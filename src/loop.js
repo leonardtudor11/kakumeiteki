@@ -1,5 +1,6 @@
 import { parseToolCalls } from './toolcall.js';
 import { needsCompaction, compact, countMessages } from './context.js';
+import { redact } from './redact.js';
 
 export async function runTurn({ provider, session, tools = {}, messages, userInput, signal, maxTurns = 25, onDelta, budget }) {
   messages.push({ role: 'user', content: userInput });
@@ -93,10 +94,10 @@ async function executeTool(tools, call, signal) {
   if (!tool) return { ok: false, output: `[tool error] unknown tool "${call.name}"` };
   try {
     const output = await tool.run(call.args ?? {}, { signal });
-    return { ok: true, output: String(output) };
+    return { ok: true, output: redact(String(output)) };
   } catch (err) {
     if (err.name === 'AbortError') throw err;
-    return { ok: false, output: `[tool error] ${err.message}` };
+    return { ok: false, output: redact(`[tool error] ${err.message}`) };
   }
 }
 

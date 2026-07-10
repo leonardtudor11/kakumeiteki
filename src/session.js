@@ -1,5 +1,6 @@
 import { appendFileSync, mkdirSync, readFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { redactDeep } from './redact.js';
 
 export function openSession({ dir, cwd, model, tier, slug = 'session', now = () => new Date() }) {
   mkdirSync(dir, { recursive: true });
@@ -19,7 +20,7 @@ function sessionHandle(path, now) {
   return {
     path,
     append(type, data = {}) {
-      writeLine(path, { type, at: now().toISOString(), ...data });
+      writeLine(path, redactDeep({ type, at: now().toISOString(), ...data }));
     },
   };
 }

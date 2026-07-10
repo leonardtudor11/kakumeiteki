@@ -62,4 +62,19 @@ Built: `src/toolcall.js` (native + fenced-JSON + liberal normalization + repair 
 
 Deferred: stream-stall watchdog (>60s no-data) — process-kill = socket reset, already covered; profiles.js auto-detect probe (micro hardcoded for now); redaction R1–R8 (Phase 5).
 
-**Next: Phase 4** — context budget + compaction + session resume. Gate: 30-turn scripted session every request ≤ budget (asserted from request log), ≥1 compaction, state-carry probe answered, `--resume` continues. Mostly mock-testable. Est 1.5h.
+## 2026-07-10 — Phase 4 complete (steps 1–4)
+
+Commits `d603ccd..28c5578`. Suite: **158 offline pass / 0 fail + 1 live**.
+
+| Gate criterion | Proof (`test/gate-phase4.test.js`, 30-turn session) |
+|---|---|
+| every request ≤ budget | 0 of ~29 requests over 2048 tokens (asserted from mock request log) |
+| ≥1 compaction | fired, each shrank token count |
+| state-carry post-compaction | ORCHID-42 from original task survives in final request |
+| `--resume` continues | rebuilt full transcript, reopened same file, new turn appended, fact still present |
+
+Built: `src/context.js` (conservative token estimator chars/3.5, budget 80% threshold, deterministic `compact()` = keep system + task + recent window + protocol-agnostic summary marker), loop.js optional-budget compaction wiring, session.js resume layer (`rebuildMessages` w/ `[interrupted]` synthesis, `loadSession`, `latestSessionFor`, `resolveSessionPath`, `reopenSession`), agent.js resume option (fresh prompt + rebuilt history + compact-on-load + model/tier drift warning).
+
+Design: compaction is deterministic (no LLM call → no hallucinated summary); system prompt regenerated on resume (not replayed) so changed tier/mode takes effect.
+
+**Next: Phase 5** — security hardening adversarial suite: D1–D14 + S1–S12 + R1–R8 + secret-globs, 100% attacks blocked AND 100% controls allowed via `node --test`. Note: D1–D14 + S1–S12 already built & tested in Phase 2; Phase 5 adds R1–R8 redaction (regexes + redact-before-persist in session.js + tool output) and consolidates the full adversarial suite. Est 1.5h.

@@ -115,6 +115,7 @@ export async function runReplInteractive(agent, {
     if (n === 'tab') { cycleMode(); return; }
     if (n === 'return' || n === 'enter') { const t = line; line = ''; cursor = 0; hi = null; finish(t); return; }
     if (n === 'backspace') { if (cursor > 0) { line = line.slice(0, cursor - 1) + line.slice(cursor); cursor--; renderBox(); } return; }
+    if (n === 'delete') { if (cursor < line.length) { line = line.slice(0, cursor) + line.slice(cursor + 1); renderBox(); } return; }
     if ((key.ctrl || key.meta) && n === 'left') { cursor = wordLeft(cursor); renderBox(); return; }
     if ((key.ctrl || key.meta) && n === 'right') { cursor = wordRight(cursor); renderBox(); return; }
     if (key.meta && n === 'b') { cursor = wordLeft(cursor); renderBox(); return; }

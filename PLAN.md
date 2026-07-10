@@ -195,7 +195,7 @@ Jail root = `realpath(projectRoot)` captured at session start. Every path: `reso
 | S6 | absolute path **inside** root | allow (control) |
 | S7 | read `~/anything` | refuse |
 | S8 | path containing `\0` | clean error, no crash |
-| S9 | `/USERS/...` case trick (APFS case-insensitive) | canonicalized by realpath; in-jail → allow normalized |
+| S9 | `/USERS/...` case trick (APFS case-insensitive) | refuse — verified: macOS realpath resolves symlinks but does **not** case-fold, so the jail prefix check fails; deny-by-default is the safe outcome on both case-sensitive and insensitive volumes |
 | S10 | write `../evil.js` | refuse |
 | S11 | edit through symlink pointing outside | refuse |
 | S12 | glob/grep rooted at `..` or absolute outside | clamp to jail / refuse |

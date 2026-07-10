@@ -1,5 +1,25 @@
 # session notes
 
+## 2026-07-11 — UI rework v1.1 (mask + pinned editor + kanji modes)
+
+Commits `e859640` (mask engine) + `f436ce2` (tui integration). Suite: **270 tests, 269 pass, 1 skip**.
+Owner-approved, design locked. Session ended for context clearance — next work in RESUME.md §"OPEN — next session".
+
+- **Mask**: hand-drawn MASK → machine-derived grids from the reference AVIF (sips → BMP → per-cell
+  downsample → median-cut palette; dev tooling was scratchpad-only). SPLASH 76×78 startup hero looks
+  great; SMALL 24×24 crisp; grade for dark terminals + xterm-256 on Apple_Terminal. `src/mask-data.js`.
+- **Pinned bar was the hard part**: DECSTBM scroll-region bar glitches with readline (probed live in
+  owner's terminal — interleaves). Retired. Built `src/tui.js`: custom zero-dep line editor
+  (`readline.emitKeypressEvents` parser + own sticky rendering) — bordered input box that grows with
+  the text, status bar pinned below, word-nav/history/in-box y/N confirm, Shift+Tab mode cycle wired
+  to `agent.setMode` (rebuilds system prompt). Pipes/tests keep plain readline → `repl.test.js` intact.
+- **Status bar**: model · numCtx window · live token gauge · ↯ compaction · mode-as-kanji
+  (侍 build / 匠 refactor / 検 audit / 忍 plan), coloured per mode.
+- **Welcome card**: session + honest capability lines, NO small mask (renders rough small; splash
+  carries the art). Flow: splash → welcome → clean REPL. Owner: "less is more."
+- Owner refined direction: useful-at-small-tier via **tool-driven machine-assistant** tasks
+  (dedup/declutter/junk/safe file ops); great-at-high-tier via bigger models. Research plan in RESUME §B.
+
 ## 2026-07-10 — Phase 2 complete (steps 1–6)
 
 Commits `975b293..f11a3a5` (+ spec commits `1a99e56`, `f7137d5`), suite: **106 pass / 0 fail**.

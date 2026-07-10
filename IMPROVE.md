@@ -32,7 +32,42 @@ Off by default — v1's "zero network except model endpoint" stays the shipped p
 
 `npm link` (or a symlink into `~/.local/bin`) so `kaku` opens in any project directory, like `claude` does. Trivial once bin/kaku.js exists — document in README at Phase 7.
 
-## 5. Later, if earned
+## 5. Knowledge layer — how the doctrine stays real and compounds
+
+The fear this answers: a small model hallucinating confident advice. The doctrine files
+(skills/) are the defense, and they harden in stages. Rule of the whole layer:
+**nothing counts as learned until a verification artifact backs it.**
+
+**Stage 1 — cited doctrine (one-time curation, cheap, do early).**
+Research-verify every rule in skills/*.md against primary sources: OWASP ASVS + Top 10
+(security.md), Google SRE book + AWS Well-Architected (system-design.md), established
+codebase-archaeology practice (reverse-engineering.md). Each rule gets a source line;
+any rule that can't be backed gets deleted. Doctrine becomes checkable text, not vibes.
+
+**Stage 2 — lessons capture (built into v1, this is the real self-learning).**
+After any bug that took >2 attempts, any architecture decision, any security fix, the
+agent appends a structured lesson to lessons/: situation → wrong assumption → correct
+pattern → the check that proved it. Lessons load through the same registry as skills.
+Guard against self-hallucination: a lesson MUST reference its verification (the test
+that passed, the diff that fixed) or it isn't written. Every hard bug also becomes a
+new eval task — so "the agent got smarter" is measured on the scorecard, never assumed.
+
+**Stage 3 — local RAG (only when the corpus outgrows context).**
+Trigger: skills/ + lessons/ exceed ~30k tokens. Then: local embeddings
+(nomic-embed-text via Ollama), plain-JSON vector index, cosine top-k — still zero deps,
+still fully local. Below that size, registry + grep retrieval beats vector search;
+building RAG for 60 lines of doctrine is machinery without payoff.
+
+**Stage 4 — fine-tuning (honest: probably never on 8 GB).**
+Training on own transcripts needs thousands of verified examples, GPU budget, and risks
+reinforcing the agent's own mistakes in a feedback loop. Only worth revisiting with big
+hardware AND a scorecard that has plateaued. The eval suite is the gate for any learned
+change: scorecard doesn't improve → the change doesn't ship.
+
+Growth curve to expect: compounding-linear (every solved bug = one retrievable lesson +
+one regression test), not exponential. Verification is what keeps the curve real.
+
+## 6. Later, if earned
 
 - Multi-model routing: cheap model for search/summarize turns, big model for edits (needs eval data first).
 - MCP client support for external tools.

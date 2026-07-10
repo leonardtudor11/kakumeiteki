@@ -1,0 +1,97 @@
+const NAME_KEYS = ['name', 'tool', 'tool_name'];
+const ARGS_KEYS = ['args', 'arguments', 'parameters', 'params', 'input'];
+const FENCE_RE = /```(\w+)?\n([\s\S]*?)```/g;
+
+export function parseToolCalls(text, { toolNames = [] } = {}) {
+  const content = typeof text === 'string' ? text : '';
+  const known = new Set(toolNames);
+
+  const fenced = [];
+  let m;
+  FENCE_RE.lastIndex = 0;
+  while ((m = FENCE_RE.exec(content)) !== null) {
+    const lang = (m[1] ?? '').toLowerCase();
+    const body = m[2].trim();
+    if (lang === 'tool') {
+      fenced.push(body); // explicit tool intent: always an attempt, repair if malformed
+    } else if (lang === 'json' || lang === '' || lang === 'jsonc') {
+      if (looksLikeCall(body)) fenced.push(body);
+    }
+  }
+
+  const blocks = fenced.length ? fenced : bareCandidate(content);
+
+  const calls = [];
+  for (const block of blocks) {
+    let obj;
+    try {
+      obj = JSON.parse(block);
+    } catch {
+      return repair(`your tool call is not valid JSON. Emit exactly one \`\`\`tool fenced block containing {"name": "...", "args": {...}} and nothing else. Offending block: ${truncate(block)}`);
+    }
+    const list = Array.isArray(obj) ? obj : [obj];
+    for (const entry of list) {
+      const norm = normalize(entry);
+      if (!norm) {
+        return repair(`your tool call is missing a recognizable "name"/"args" shape. Use {"name": "<tool>", "args": {...}}. Got: ${truncate(JSON.stringify(entry))}`);
+      }
+      if (known.size && !known.has(norm.name)) {
+        return repair(`unknown tool "${norm.name}". Available tools: ${[...known].join(', ')}. Emit a corrected \`\`\`tool block.`);
+      }
+      calls.push(norm);
+    }
+  }
+  return { calls, repair: null };
+}
+
+function normalize(entry) {
+  if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return null;
+  const nameKey = NAME_KEYS.find((k) => typeof entry[k] === 'string' && entry[k].trim());
+  if (!nameKey) return null;
+  const name = entry[nameKey].trim();
+
+  let args = {};
+  const argsKey = ARGS_KEYS.find((k) => k in entry);
+  if (argsKey !== undefined) {
+    args = coerceArgs(entry[argsKey]);
+    if (args === null) return null;
+  } else {
+    const { [nameKey]: _n, ...rest } = entry;
+    args = rest;
+  }
+  return { name, args };
+}
+
+function coerceArgs(value) {
+  if (value && typeof value === 'object' && !Array.isArray(value)) return value;
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (trimmed === '') return {};
+    try {
+      const parsed = JSON.parse(trimmed);
+      return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function looksLikeCall(body) {
+  if (!body.startsWith('{') && !body.startsWith('[')) return false;
+  return NAME_KEYS.some((k) => body.includes(`"${k}"`));
+}
+
+function bareCandidate(content) {
+  const trimmed = content.trim();
+  if ((trimmed.startsWith('{') || trimmed.startsWith('[')) && looksLikeCall(trimmed)) return [trimmed];
+  return [];
+}
+
+function repair(message) {
+  return { calls: [], repair: message };
+}
+
+function truncate(s, n = 200) {
+  return s.length > n ? s.slice(0, n) + '…' : s;
+}

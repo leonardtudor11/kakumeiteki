@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { writeFileSync } from 'node:fs';
+import { existsSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { runTask, runSuite, renderScorecard } from '../eval/run.js';
@@ -41,6 +41,7 @@ test('runTask: passing solution → pass=true with metrics', async () => {
   assert.equal(result.toolCalls, 1);
   assert.ok(result.tokens > 0);
   assert.ok(result.seconds > 0);
+  assert.equal(result.kept, null, 'passing runs are cleaned up');
 });
 
 test('runTask: wrong answer → pass=false, run still completes', async () => {
@@ -50,6 +51,8 @@ test('runTask: wrong answer → pass=false, run still completes', async () => {
   assert.equal(result.pass, false);
   assert.equal(result.status, 'done');
   assert.match(result.detail, /finalText=/);
+  assert.ok(result.kept && existsSync(result.kept), 'failed runs keep their transcript for triage');
+  rmSync(join(result.kept, '..', '..'), { recursive: true, force: true }); // tidy the kept workdir after asserting
 });
 
 test('runTask: fix-test check runs the real fixture test (deterministic)', async () => {

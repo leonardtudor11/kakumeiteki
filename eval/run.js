@@ -46,8 +46,10 @@ export async function runTask(task, { config, makeAgent, now = () => Date.now() 
     }
   }
 
-  rmSync(base, { recursive: true, force: true });
-  return { id: task.id, name: task.name, pass, status, turns, toolCalls, tokens, seconds, detail };
+  // Keep failed runs' workdir + session transcript — a regression you can't replay
+  // can't be triaged (learned the hard way on 06-find-def).
+  if (pass) rmSync(base, { recursive: true, force: true });
+  return { id: task.id, name: task.name, pass, status, turns, toolCalls, tokens, seconds, detail, kept: pass ? null : sessionPath };
 }
 
 export async function runSuite(tasks, { config, runs = 1, makeAgent, now } = {}) {

@@ -42,6 +42,7 @@ for (const model of MODELS) {
   all[model] = results;
   const passed = results.filter((r) => r.pass).length;
   process.stderr.write(`${model}: ${passed}/${results.length} passed in ${((Date.now() - t0) / 60000).toFixed(1)} min\n`);
+  for (const r of results.filter((x) => x.kept)) process.stderr.write(`  kept transcript: ${r.id} run ${r.run} -> ${r.kept}\n`);
 }
 
 const lines = ['# Eval scorecard — model comparison', '', `Models: ${MODELS.join(' vs ')} · ${RUNS} runs/task`, ''];

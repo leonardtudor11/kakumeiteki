@@ -117,3 +117,12 @@ Commits `724de5a..2f0ac9e` (main) + `gate-planted-bug` branch. Suite: **236 offl
 - Hygiene: sweep-pattern text + first name scrubbed from public tree (history still has old fragments — flagged to owner).
 
 v1 verification: PLAN end-to-end items all passed (live one-shot, eval scorecard, security suite, fresh-agent test); live TTY Ctrl-C drill = owner-side check.
+
+## 2026-07-10 (later) — v1.1 capability drop: doctrine layer + speed levers
+
+Commits `d6ae193..c61b3f1`. Suite: **249 offline pass / 0 fail**.
+
+- **IMPROVE 5b levers 1-3 shipped**: src/preload.js (task-named in-jail files attached to the first user message — redacted, 6KB/file cap, 2 files max, secret-globs excluded; oversized falls back to the read tool), micro-prompt few-shot read→edit→done example + skip-the-read hint, early-stop line both tiers.
+- **IMPROVE 5.1b doctrine layer shipped**: 9 cited playbooks in skills/ (auth, payments, resilience, scalability, rag, secrets-ops, observability, operations + safe-coding extension of security.md) + built-in read-only `skill` tool (serves from the tool's own install dir — deliberate, whitelisted out-of-jail read). Registry line rides the tool list. **Live-verified**: qwen3.5:4b consulted payments playbook and answered from it.
+- Docs refreshed to stay gate-truthful; playbook lint test enforces size + Sources on every doctrine file.
+- **History purge BLOCKED by permission classifier** (git filter-repo = destructive, needs explicitly named owner approval). Backup bundle ready at .claude/pre-purge-2026-07-10.bundle; replacements file prepared. Awaiting owner's explicit go.

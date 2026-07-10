@@ -135,11 +135,16 @@ on M1 8GB (~20s/turn = cold load + full-history reprocess + decode). Levers, ran
    fumbling and premature/again reads. Keep it inside the micro token budget.
 3. **Explicit early-stop (★★).** "Once the edit is applied AND you have verified it, stop —
    do not re-read or re-confirm." The 8-turn run trailed past done.
-4. **Runtime: keep model warm + MLX + quantized KV + tight num_ctx (★★).** `keep_alive` avoids
-   reload between turns; MLX backend −15-30%; q8 KV cache + smallest workable num_ctx = less
-   to reprocess each turn. **Phase 4 (context budget + compaction) directly delivers the
-   num_ctx half of this** — smaller context = faster turns, so the speed fix is partly on the
-   critical path already.
+4. **Runtime: keep model warm + MLX + quantized KV + tight num_ctx (★★★ — MEASURED, promoted).**
+   Phase 6 eval revealed this is the single biggest speed lever on 8GB, not a minor one:
+   `ollama ps` during the run showed qwen3.5:4b at **6.1 GB working set @ num_ctx=8192, split
+   32% CPU / 68% GPU** — i.e. it SPILLED past the ~5.3 GB Metal ceiling and ⅓ ran on CPU. That
+   spill is why qwen3.5:4b averaged 116.6s/task vs coder:3b's 21.1s (coder:3b at 1.9 GB fits GPU
+   fully). Hypothesis to test: **num_ctx=4096 halves the KV cache (~0.6 GB saved), likely dropping
+   3.5:4b under 5.3 GB → full GPU → est 3-5× faster** while keeping most capability. If confirmed,
+   3.5:4b becomes both the most capable AND acceptably fast pick on 8GB. Also: `keep_alive` avoids
+   reload between turns; MLX backend −15-30%; q8 KV cache. Phase 4 compaction already keeps context
+   small at runtime, complementing a lower num_ctx ceiling.
 5. **Multi-model routing (★ later, see §6).** 1.5B for mechanical/search turns, escalate to
    4B+ for reasoning. Real win, needs eval data first so it's not a guess.
 6. **Deterministic fast-path (★ narrow).** A pure literal rename / single-string replace with

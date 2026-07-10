@@ -1,6 +1,6 @@
 // Machine-derived samurai-mask pixel grids — do NOT hand-edit.
 // Provenance: reference AVIF -> sips PNG/BMP -> per-cell downsample of the 626px art
-// (dominant-color for SPLASH crisp detail; foreground-average for SMALL/TINY so the
+// (dominant-color for SPLASH crisp detail; foreground-average for SMALL so the
 // silver face survives at low res) -> median-cut palette. Extraction tooling lives in
 // the session scratchpad (dev-time only, not shipped).
 //
@@ -10,8 +10,7 @@
 // on Apple_Terminal (which mangles 24-bit truecolour), maps to xterm-256. '.' = transparent.
 //
 // SPLASH 76x78 (39 rows) — startup hero, shown once.
-// SMALL  24x24 (12 rows) — everyday welcome accent.
-// TINY   12x12 (6 rows) — prompt snippet.
+// SMALL  24x24 (12 rows) — narrow-terminal fallback.
 
 export const SPLASH = {
   w: 76, h: 78,
@@ -127,24 +126,5 @@ export const SMALL = {
     '.........SKXXKS.........',
     '..........KHHK..........',
     '...........KS...........',
-  ],
-};
-export const TINY = {
-  w: 12, h: 12,
-  chars: 'KDSWGORXM',
-  palette: [[32,19,18], [70,25,23], [69,56,54], [119,55,40], [114,97,57], [107,106,104], [133,101,85], [164,130,64], [203,160,72]],
-  rows: [
-    '............',
-    '..M.SWWS.M..',
-    '..MGKWWKGM..',
-    '..WKDRRDKW..',
-    '..WWWWWWWW..',
-    '..DDDDDDKD..',
-    '..DSGSKGOD..',
-    '.WKOOOOOOKW.',
-    'XWKSOOSSSKWX',
-    '.GKDWDDDKKW.',
-    '....SRRS....',
-    '.....DW.....',
   ],
 };

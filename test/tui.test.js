@@ -1,25 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { MASK, renderMaskRows, renderGrid, showBanner, showWelcome } from '../src/banner.js';
-import { SPLASH, SMALL, TINY } from '../src/mask-data.js';
+import { renderGrid, showBanner, showWelcome } from '../src/banner.js';
+import { SPLASH, SMALL } from '../src/mask-data.js';
 import { renderStatusBar, gaugeColor, short, tildeCwd, MODE_META } from '../src/statusbar.js';
-
-test('mask: every row 44 px, even row count, only palette chars, symmetric', () => {
-  assert.equal(MASK.length % 2, 0);
-  for (const row of MASK) {
-    assert.equal(row.length, 44, row);
-    assert.match(row, /^[.KDSWGORX]+$/, row);
-    assert.equal(row, [...row].reverse().join(''), `asymmetric: ${row}`);
-  }
-});
-
-test('renderMaskRows: one char row per two pixel rows, truecolor half-blocks', () => {
-  const rows = renderMaskRows();
-  assert.equal(rows.length, MASK.length / 2);
-  assert.ok(rows.every((r) => /[▀▄ ]/.test(r)));
-  assert.match(rows[1], /\x1b\[38;2;230;180;60m/, 'horn gold present');
-});
 
 test('showBanner: writes mask, title, version — no real delays needed', async () => {
   let out = '';
@@ -30,7 +14,7 @@ test('showBanner: writes mask, title, version — no real delays needed', async 
   assert.match(out, /[▀▄]/, 'renders half-block mask');
 });
 
-for (const [name, grid] of [['SPLASH', SPLASH], ['SMALL', SMALL], ['TINY', TINY]]) {
+for (const [name, grid] of [['SPLASH', SPLASH], ['SMALL', SMALL]]) {
   test(`mask-data ${name}: valid grid — dims, chars, palette all consistent`, () => {
     assert.equal(grid.rows.length, grid.h, 'row count = h');
     assert.equal(grid.palette.length, grid.chars.length, 'one palette entry per char');

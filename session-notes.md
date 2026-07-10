@@ -105,3 +105,15 @@ Verdict: 3.5:4b is the better brain (wins add-function, find-vuln, edit-precisio
 Real bug fixed: nested `node --test` inherits NODE_TEST_CONTEXT and won't exit non-zero → broken fixtures false-pass. Check now strips it (would have corrupted every eval).
 
 **Next: Phase 7 (FINAL)** — docs (ARCHITECTURE.md/DEBUGGING.md/AGENT.md) + build the real CLI (bin/kaku.js still a STUB: argv parse, REPL, one-shot -p, --resume/--continue, config load) + modes polish. Gate: fresh Claude session with repo-only context explains architecture + fixes a pre-committed planted bug → fixture test green, zero out-of-repo questions. Est 1h+CLI. This is the acceptance test for the "no comments, docs carry it" standard.
+
+## 2026-07-10 — Phase 7 complete → v1.0.0 SHIPPED
+
+Commits `724de5a..2f0ac9e` (main) + `gate-planted-bug` branch. Suite: **236 offline pass / 0 fail**.
+
+- **Step 0**: numCtx=4096 hypothesis REFUTED by measurement — working set 6.0GB vs 6.1GB @8192 (KV was ~0.1GB; multimodal weights+buffers exceed the 5.3GB Metal ceiling at ANY ctx), timings equal/slower. numCtx stays 8192.
+- **Steps 1–3 (real CLI)**: parseArgv (unknown flag = hard error), one-shot `-p` with streamed fence-suppressed output, REPL (readline/promises + per-question AbortSignal), y/N confirm for ask-class bash, Ctrl-C cancel/exit semantics, `--continue`/`--resume` verified offline (mock Ollama HTTP server, request-capture assertions) AND live (pong recall drill).
+- **Steps 4–6 (docs gate)**: planted compact-on-resume bug in the ONE uncovered src branch (found via coverage), fixture test red on branch only; wrote ARCHITECTURE/DEBUGGING/AGENT after planting; **GATE PASSED** — fresh repo-only session explained the architecture (10 cited claims) + fixed the bug in 1 line via the intended doc trail, zero out-of-repo questions. Evidence: branch `103cb5d`.
+- **Step 7 (owner asks + ship)**: samurai banner (44x40 pixel grid extracted from owner's reference via ffmpeg+quantize+mirror+denoise), DECSTBM bottom status bar (name·model·mode·live ctx%), working-ninja indicator, `kaku doctor` onboarding, README quickstart, v1.0.0.
+- Hygiene: sweep-pattern text + first name scrubbed from public tree (history still has old fragments — flagged to owner).
+
+v1 verification: PLAN end-to-end items all passed (live one-shot, eval scorecard, security suite, fresh-agent test); live TTY Ctrl-C drill = owner-side check.

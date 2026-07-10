@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { isSecretPath } from '../permissions.js';
 
-export function createEditTool({ jail }) {
+export function createEditTool({ jail, undo }) {
   return {
     name: 'edit',
     schema: {
@@ -46,6 +46,7 @@ export function createEditTool({ jail }) {
         throw new Error(`old string occurs ${count}x in ${path} — widen the anchor with surrounding lines so it is unique, or set replaceAll: true`);
       }
 
+      undo?.record({ path, real, op: 'edit', content });
       writeFileSync(real, content.split(old).join(replacement));
       const applied = replaceAll ? count : 1;
       return `edited ${path}: ${applied} replacement${applied === 1 ? '' : 's'}`;

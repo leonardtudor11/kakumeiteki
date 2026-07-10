@@ -26,7 +26,9 @@ loopback model endpoint.
 | `src/permissions.js` | `createJail` (realpath path jail), `isSecretPath` deny-globs, `splitSegments` + `classifyCommand` + `actionForCommand` (bash policy) |
 | `src/preload.js` | speed lever: task names an in-jail file → its content (redacted, capped) rides the first user message, skipping the read turn |
 | `src/doctor.js` | `kaku doctor` — Node/Ollama/model checks with exact fix commands |
-| `src/banner.js` / `src/statusbar.js` | terminal chrome: pixel banner, DECSTBM status bar + busy indicator (TTY-only) |
+| `src/undo.js` | pre-mutation backups (blob + manifest per session) + the undo stack behind `kaku undo` |
+| `src/banner.js` / `src/mask-data.js` / `src/statusbar.js` | terminal chrome: machine-derived splash mask + renderer, status line, welcome card (TTY-only) |
+| `src/tui.js` | interactive raw-mode line editor: bordered input box, pinned status bar, mode cycle (TTY-only; pipes get plain readline) |
 | `src/tools/` | `read write edit ls glob grep bash skill` + `index.js` registry; `walk.js` shared traversal |
 | `skills/` | doctrine playbooks (auth, payments, resilience, scalability, rag, secrets-ops, observability, operations, security…) served read-only by the `skill` tool |
 | `eval/` | 10 script-checked tasks + `run.js` harness + `scorecard.js` full-matrix runner |

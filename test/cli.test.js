@@ -11,7 +11,15 @@ import { parseArgv } from '../src/cli.js';
 const BIN = join(dirname(fileURLToPath(import.meta.url)), '..', 'bin', 'kaku.js');
 
 test('parseArgv: no args → defaults', () => {
-  assert.deepEqual(parseArgv([]), { help: false, version: false, command: null, task: null, resume: null, cliFlags: {} });
+  assert.deepEqual(parseArgv([]), { help: false, version: false, command: null, task: null, resume: null, yes: false, cliFlags: {} });
+});
+
+test('parseArgv: undo command, with and without --yes', () => {
+  assert.equal(parseArgv(['undo']).command, 'undo');
+  const withYes = parseArgv(['undo', '--yes']);
+  assert.equal(withYes.command, 'undo');
+  assert.equal(withYes.yes, true);
+  assert.throws(() => parseArgv(['-p', 'x', 'undo']), /unknown flag/, 'undo only as the first arg');
 });
 
 test('parseArgv: -p captures the task', () => {

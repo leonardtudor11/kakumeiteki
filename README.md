@@ -46,6 +46,9 @@ Don't have Ollama? Install it from [ollama.com](https://ollama.com), start the a
 - **Sessions**: every run is an append-only JSONL transcript. `kaku --continue` resumes
   the latest session for the directory; `kaku --resume <id>` picks one. Crash-safe.
 - **Cancel**: Ctrl-C once cancels the turn, twice exits. Always resumable.
+- **Undo**: every `edit`/`write` saves the file's pre-change version first (no backup →
+  no change). `kaku undo` reverts the last change; run it again to walk further back.
+  Honest limit: bash-made changes aren't covered — only the file tools are.
 - **`kaku doctor`**: one command that verifies the setup and prints exact fixes.
 
 ## Flags
@@ -58,6 +61,7 @@ Don't have Ollama? Install it from [ollama.com](https://ollama.com), start the a
 | `--permissions safe\|auto\|readonly` | `safe` (default) asks before mutations |
 | `--continue` / `--resume [id]` | resume sessions |
 | `doctor` | setup check |
+| `undo [--yes]` | revert the last file change (repeat to walk back) |
 
 ## Config
 

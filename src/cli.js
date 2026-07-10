@@ -6,6 +6,9 @@ import * as readline from 'node:readline/promises';
 import { loadConfig, defaultPaths } from './config.js';
 import { EndpointError } from './provider.js';
 import { createAgent } from './agent.js';
+import { createJail } from './permissions.js';
+import { latestSessionFor, reopenSession } from './session.js';
+import { undoDirFor, nextUndo, restore } from './undo.js';
 import { runTurn } from './ui.js';
 import { runDoctor } from './doctor.js';
 import { showBanner, showWelcome } from './banner.js';
@@ -17,6 +20,7 @@ usage:
   kaku [flags]              interactive REPL
   kaku -p "task" [flags]    one-shot: run task, print result, exit
   kaku doctor               check Node, Ollama and the model; prints exact fixes
+  kaku undo                 revert the last file change from this directory's latest session
 
 flags:
   -p <task>            one-shot task
@@ -25,17 +29,20 @@ flags:
   --permissions <p>    safe | auto | readonly
   --continue           resume latest session for this directory
   --resume [id]        resume session by id (no id = latest)
+  --yes                skip the undo confirmation
   -h, --help           show this help
   --version            print version`;
 
 const VALUE_FLAGS = { '--model': 'model', '--mode': 'mode', '--permissions': 'permissions' };
 
 export function parseArgv(argv) {
-  const out = { help: false, version: false, command: null, task: null, resume: null, cliFlags: {} };
+  const out = { help: false, version: false, command: null, task: null, resume: null, yes: false, cliFlags: {} };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
-    if (arg === 'doctor' && out.command === null && i === 0) {
-      out.command = 'doctor';
+    if ((arg === 'doctor' || arg === 'undo') && out.command === null && i === 0) {
+      out.command = arg;
+    } else if (arg === '--yes') {
+      out.yes = true;
     } else if (arg === '-h' || arg === '--help') {
       out.help = true;
     } else if (arg === '--version') {
@@ -92,6 +99,7 @@ export async function main(argv = process.argv.slice(2), { cwd = process.cwd() }
   }
 
   if (parsed.command === 'doctor') return runDoctor(config);
+  if (parsed.command === 'undo') return runUndo(config, { cwd, yes: parsed.yes });
 
   const confirmRef = { fn: null };
   let agent;
@@ -195,6 +203,47 @@ async function runReplPlain(agent, {
     confirmRef.fn = null;
     rl.close();
   }
+  return 0;
+}
+
+// kaku undo: revert the most recent not-yet-undone file change recorded for this
+// directory's latest session. Needs no model/provider — pure file operation. Repeated
+// invocations walk the undo stack backwards. Exported for tests.
+export async function runUndo(config, {
+  cwd = process.cwd(), yes = false,
+  input = process.stdin, output = process.stdout, errput = process.stderr,
+} = {}) {
+  const jail = createJail(cwd);
+  const sessionPath = latestSessionFor(expandTilde(config.sessionDir), jail.root);
+  if (!sessionPath) {
+    errput.write(`no session found for ${jail.root} — nothing to undo\n`);
+    return 1;
+  }
+  const dir = undoDirFor(sessionPath);
+  const entry = nextUndo(dir);
+  if (!entry) {
+    errput.write('nothing to undo\n');
+    return 1;
+  }
+  // A manifest is data, not authority: refuse entries pointing outside this directory's jail.
+  if (entry.real !== jail.root && !entry.real.startsWith(jail.root + '/')) {
+    errput.write(`refusing: recorded path ${entry.real} is outside ${jail.root}\n`);
+    return 1;
+  }
+  const action = entry.existed ? 'restore pre-change version of' : 'delete (was created by that change)';
+  output.write(`undo #${entry.n} (${entry.op} at ${entry.at}): ${action} ${entry.path}\n`);
+  if (!yes) {
+    const rl = readline.createInterface({ input, output });
+    const answer = await rl.question('[y/N] ').catch(() => 'n');
+    rl.close();
+    if (!/^y(es)?$/i.test(answer.trim())) {
+      output.write('undo cancelled\n');
+      return 1;
+    }
+  }
+  restore(dir, entry);
+  reopenSession(sessionPath).append('undo_restore', { n: entry.n, op: entry.op, path: entry.path });
+  output.write(entry.existed ? `restored ${entry.path}\n` : `removed ${entry.path}\n`);
   return 0;
 }
 

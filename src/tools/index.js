@@ -8,11 +8,11 @@ import { createBashTool } from './bash.js';
 import { createSkillTool } from './skill.js';
 import { DEFAULTS } from '../config.js';
 
-export function createTools({ jail, config = DEFAULTS, confirm }) {
+export function createTools({ jail, config = DEFAULTS, confirm, undo }) {
   const tools = [
     createReadTool({ jail }),
-    createWriteTool({ jail }),
-    createEditTool({ jail }),
+    createWriteTool({ jail, undo }),
+    createEditTool({ jail, undo }),
     createLsTool({ jail }),
     createGlobTool({ jail }),
     createGrepTool({ jail }),

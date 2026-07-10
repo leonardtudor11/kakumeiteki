@@ -85,4 +85,23 @@ Built: `src/redact.js` (R1–R8 regexes + `redact()`/`redactDeep()`, PEM/specifi
 
 Security posture now complete across both directions: realpath jail + deny-list classifier + minimal-env bash (Phase 2) + secret redaction never persisting/recirculating (Phase 5). Honest limit still stated in-code: deny-list is a tripwire, jail + default-ask + minimal-env + redaction are the real guarantees.
 
-**Next: Phase 6** — eval suite (10 verifiable tasks) + scorecard runner. Gate: runner completes all 10 tasks twice without crashing; scorecard.md has pass/fail + turns + tokens + seconds per task; every pass-check is a script (no judgment calls). This is how qwen3.5:4b vs qwen2.5-coder:3b gets judged objectively. Needs live model — will warn on RAM. Est 2h.
+## 2026-07-10 — Phase 6 complete (steps 1–3)
+
+Commits `15719bc..5f2548a`. Suite: **190 offline pass / 0 fail + 1 live**.
+
+Built: `eval/run.js` (runTask/runSuite/renderScorecard), `eval/tasks/` (10 verifiable tasks, each a script check), `eval/scorecard.js` (full-matrix runner), `test/eval-harness.test.js` + `test/eval-tasks.test.js` (runner + every check validated as a real gate offline).
+
+**Gate PASSED — full matrix (both models × 2 runs × 10 tasks = 40 live runs, zero crashes):**
+
+| Model | Score | Avg speed |
+|---|---|---|
+| qwen3.5:4b | **11/20** | 116.6s/task |
+| qwen2.5-coder:3b | 6/20 | 21.1s/task |
+
+Verdict: 3.5:4b is the better brain (wins add-function, find-vuln, edit-precision, constraint; never lost a task coder:3b won) but slow on 8GB. Both fail the hardest multi-step tasks (fix-test, rename, edit-big-file 0/2 each) — the real ceiling of a ~3-4B local model.
+
+**Measured slowness cause (big finding):** `ollama ps` showed 3.5:4b at 6.1GB @ num_ctx=8192 spilling 32% to CPU (past ~5.3GB Metal ceiling). num_ctx=4096 likely keeps it GPU-resident for est 3-5× speedup — top lever in IMPROVE.md 5b, worth testing.
+
+Real bug fixed: nested `node --test` inherits NODE_TEST_CONTEXT and won't exit non-zero → broken fixtures false-pass. Check now strips it (would have corrupted every eval).
+
+**Next: Phase 7 (FINAL)** — docs (ARCHITECTURE.md/DEBUGGING.md/AGENT.md) + build the real CLI (bin/kaku.js still a STUB: argv parse, REPL, one-shot -p, --resume/--continue, config load) + modes polish. Gate: fresh Claude session with repo-only context explains architecture + fixes a pre-committed planted bug → fixture test green, zero out-of-repo questions. Est 1h+CLI. This is the acceptance test for the "no comments, docs carry it" standard.

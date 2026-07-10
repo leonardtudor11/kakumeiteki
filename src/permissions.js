@@ -223,7 +223,7 @@ function classifySegment(seg, jail) {
     if (rmClass) return rmClass;
   }
 
-  const askFloor = seg.hasSubstitution || cmd === 'eval';
+  const secretArg = rest.find((w) => isSecretPath(w.text));
 
   let base;
   if (NETWORK_CMDS.has(cmd)) base = { class: 'ask', reason: `network: ${cmd}` };
@@ -235,8 +235,10 @@ function classifySegment(seg, jail) {
   else if (rest.some((w) => unquoted(w) && w.text === '--version') && !seg.hasRedirect) base = { class: 'read-only', reason: 'read-only: --version' };
   else base = { class: 'mutate', reason: `mutate: ${cmd || 'unknown'}` };
 
-  if (askFloor && RANK[base.class] < RANK.ask) {
-    return { class: 'ask', reason: seg.hasSubstitution ? 'command substitution' : 'eval' };
+  if (RANK[base.class] < RANK.ask) {
+    if (seg.hasSubstitution) return { class: 'ask', reason: 'command substitution' };
+    if (cmd === 'eval') return { class: 'ask', reason: 'eval' };
+    if (secretArg) return { class: 'ask', reason: `touches potential secret file: ${secretArg.text}` };
   }
   return base;
 }

@@ -209,10 +209,10 @@ test('edit: identical old/new, empty old, secret path, missing file → clean er
   }
 });
 
-test('registry: exposes all six tools with coherent schemas', () => {
+test('registry: exposes all seven tools with coherent schemas', () => {
   const { tools, cleanup } = setup();
   try {
-    assert.deepEqual(Object.keys(tools).sort(), ['edit', 'glob', 'grep', 'ls', 'read', 'write']);
+    assert.deepEqual(Object.keys(tools).sort(), ['bash', 'edit', 'glob', 'grep', 'ls', 'read', 'write']);
     for (const tool of Object.values(tools)) {
       assert.equal(tool.schema.function.name, tool.name);
       assert.ok(Array.isArray(tool.schema.function.parameters.required));

@@ -11,7 +11,7 @@ export async function runTurn({ provider, session, tools = {}, messages, userInp
 
       for (const call of assistant.toolCalls) {
         session.append('tool_call', { name: call.name, args: call.args });
-        const result = await executeTool(tools, call);
+        const result = await executeTool(tools, call, signal);
         session.append('tool_result', { name: call.name, ok: result.ok, output: result.output });
         messages.push({ role: 'tool', name: call.name, content: result.output });
       }
@@ -28,13 +28,14 @@ export async function runTurn({ provider, session, tools = {}, messages, userInp
   return { status: 'turn_cap' };
 }
 
-async function executeTool(tools, call) {
+async function executeTool(tools, call, signal) {
   const tool = tools[call.name];
   if (!tool) return { ok: false, output: `[tool error] unknown tool "${call.name}"` };
   try {
-    const output = await tool.run(call.args ?? {});
+    const output = await tool.run(call.args ?? {}, { signal });
     return { ok: true, output: String(output) };
   } catch (err) {
+    if (err.name === 'AbortError') throw err;
     return { ok: false, output: `[tool error] ${err.message}` };
   }
 }

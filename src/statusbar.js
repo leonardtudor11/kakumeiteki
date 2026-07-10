@@ -6,8 +6,9 @@
 // Colours use xterm-256 codes (38;5;N), which render on truecolor terminals AND
 // Apple_Terminal (which mangles 24-bit truecolour).
 
-const RESET = '\x1b[0m', DIM = '\x1b[2m';
-const RED = '\x1b[38;5;160m', GREEN = '\x1b[38;5;71m', YELLOW = '\x1b[38;5;178m';
+// Shared chrome ANSI constants — tui.js and banner.js import these too.
+export const RESET = '\x1b[0m', DIM = '\x1b[2m';
+export const RED = '\x1b[38;5;160m', GREEN = '\x1b[38;5;71m', YELLOW = '\x1b[38;5;178m';
 
 // Each mode → a feudal-Japan role that matches what the mode actually does.
 // build 侍 samurai (executes) · refactor 匠 takumi/craftsman (refines received material)

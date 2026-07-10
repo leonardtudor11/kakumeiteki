@@ -10,11 +10,10 @@
 // refinement — deliberately omitted to avoid partial-line render bugs.)
 import * as readline from 'node:readline';
 import { homedir } from 'node:os';
-import { renderStatusBar, tildeCwd, modeMeta } from './statusbar.js';
+import { renderStatusBar, tildeCwd, modeMeta, RESET, DIM, YELLOW } from './statusbar.js';
 import { countMessages } from './context.js';
 import { createDeltaRenderer } from './ui.js';
 
-const RESET = '\x1b[0m', DIM = '\x1b[2m', YELLOW = '\x1b[38;5;178m';
 const MODE_ORDER = ['build', 'refactor', 'audit', 'plan'];
 const isWord = (c) => /\w/.test(c);
 

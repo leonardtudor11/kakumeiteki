@@ -1,7 +1,5 @@
 import { SPLASH, SMALL } from './mask-data.js';
-import { modeMeta } from './statusbar.js';
-
-const RESET = '\x1b[0m';
+import { modeMeta, RESET, DIM } from './statusbar.js';
 
 // --- machine-derived grid renderer (grids from mask-data.js) ---
 //
@@ -80,7 +78,7 @@ export async function showBanner(output, { version = '', animate = true, sleep =
   const pad = ' '.repeat(Math.max(0, Math.floor((grid.w - title.length) / 2)));
   const redTitle = apple ? '\x1b[1;38;5;160m' : '\x1b[1;38;2;192;57;43m';
   output.write(`\n${indent}${pad}${redTitle}${title}${RESET}\n`);
-  output.write(`${indent}\x1b[2m革命的 — fully-local coding agent${version ? ` · v${version}` : ''}${RESET}\n\n`);
+  output.write(`${indent}${DIM}革命的 — fully-local coding agent${version ? ` · v${version}` : ''}${RESET}\n\n`);
 }
 
 // Welcome card shown once after the splash: the active session (model · mode · permissions)
@@ -88,7 +86,6 @@ export async function showBanner(output, { version = '', animate = true, sleep =
 // a small half-block mask renders rough in a real terminal font; the splash carries the art.
 export function showWelcome(output, { model = '', mode = '', permissions = '', indent = '  ' } = {}) {
   const m = modeMeta(mode);
-  const DIM = '\x1b[2m';
   const session = `${model}${mode ? ` ${DIM}·${RESET} ${m.color}${m.kanji} ${mode}${RESET}` : ''}${permissions ? ` ${DIM}·${RESET} ${DIM}${permissions}${RESET}` : ''}`;
   const lines = [
     `${indent}${session}`,

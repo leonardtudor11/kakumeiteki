@@ -12,6 +12,7 @@ const LAWS = [
   'State assumptions. If the task is ambiguous, ask before building — never guess silently.',
   'Every task has a verifiable success check. Run it after changing. Report the actual result, never "should work".',
   'Flag security issues you notice in passing, even when unasked.',
+  'Stop when the success check passes — no re-reading or re-verifying after confirmation.',
 ];
 
 export function buildSystemPrompt({ tier = 'micro', mode = 'build', tools = [], cwd = '.' } = {}) {
@@ -34,10 +35,17 @@ Rules:
 Tools:
 ${toolList}
 
-To call a tool, reply with ONE fenced block and nothing else:
+To call a tool, reply with ONE fenced block and nothing else. A typical edit task is exactly this sequence, one block per message:
 \`\`\`tool
 {"name": "read", "args": {"path": "src/app.js"}}
 \`\`\`
+then, after the result:
+\`\`\`tool
+{"name": "edit", "args": {"path": "src/app.js", "old": "exact text copied from the file", "new": "replacement"}}
+\`\`\`
+then plain text: the one-line result.
+If a file's content is already provided in the task, skip the read and edit directly.
+Once the edit is applied, STOP — reply with the result. Do not re-read the file to confirm.
 When the task is done, reply with plain text (no tool block): a one-line result, then a short self-check of what you verified.`;
 }
 

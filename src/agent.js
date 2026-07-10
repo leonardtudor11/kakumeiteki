@@ -4,6 +4,7 @@ import { createTools } from './tools/index.js';
 import { buildSystemPrompt } from './prompt.js';
 import { openSession, reopenSession, loadSession, latestSessionFor, resolveSessionPath } from './session.js';
 import { budgetFor, compact, needsCompaction, countMessages } from './context.js';
+import { preloadNamedFiles } from './preload.js';
 import { runTurn } from './loop.js';
 
 const DEFAULT_MICRO_CTX = 8192;
@@ -53,7 +54,8 @@ export async function createAgent(config, { cwd = process.cwd(), sessionDir, con
     warnings,
     messages,
     async run(task, { signal, onDelta, maxTurns = config.maxTurns } = {}) {
-      return runTurn({ provider, session, tools, messages, userInput: task, signal, onDelta, maxTurns, budget });
+      const userInput = `${task}${preloadNamedFiles(task, { jail })}`;
+      return runTurn({ provider, session, tools, messages, userInput, signal, onDelta, maxTurns, budget });
     },
   };
 }

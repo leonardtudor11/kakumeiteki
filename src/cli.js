@@ -112,10 +112,10 @@ export async function main(argv = process.argv.slice(2), { cwd = process.cwd() }
   for (const w of agent.warnings) console.error(`warning: ${w}`);
 
   if (parsed.task !== null) return runOnce(agent, parsed.task);
-  if (process.stdout.isTTY && !process.env.KAKU_PLAIN && !process.env.NO_COLOR) {
-    const version = readVersion();
-    await showBanner(process.stdout, { version });
-    showWelcome(process.stdout, { version, model: config.model, mode: config.mode, permissions: config.permissions });
+  // Same gate as the interactive editor below — piped stdin gets no chrome either.
+  if (process.stdin.isTTY && process.stdout.isTTY && !process.env.KAKU_PLAIN && !process.env.NO_COLOR) {
+    await showBanner(process.stdout, { version: readVersion() });
+    showWelcome(process.stdout, { model: config.model, mode: config.mode, permissions: config.permissions });
   }
   return runRepl(agent, { confirmRef, config });
 }

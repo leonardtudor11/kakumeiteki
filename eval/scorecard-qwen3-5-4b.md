@@ -4,30 +4,33 @@ Model: `qwen3.5:4b` · generated: full-matrix
 
 | run | task | pass | turns | tools | tokens | sec | detail |
 |---|---|---|---|---|---|---|---|
-| 1 | 01-hello-tool | ✅ | 2 | 1 | 18 | 40.1 | usedListTool=true namedBoth=true |
-| 1 | 02-read-answer | ✅ | 2 | 1 | 2 | 28.7 | finalText=8080 |
-| 1 | 03-fix-test | ❌ | 7 | 6 | 0 | 108.3 | test failed: exit 1 |
-| 1 | 04-add-function | ❌ | 10 | 9 | 0 | 220.6 | test failed: exit 1 |
-| 1 | 05-rename | ❌ | 2 | 1 | 0 | 34.7 | stillOld=[calc.js,cart.js,report.js] missingNew=[calc.js,cart.js,report.js] |
-| 1 | 06-find-def | ✅ | 2 | 1 | 18 | 32.7 | finalText=The function `computeTax` is defined in `src/finance/tax.js`. |
-| 1 | 07-find-vuln | ❌ | 2 | 1 | 0 | 33.4 | mentionedInjection=false ::  |
-| 1 | 08-edit-precision | ❌ | 2 | 1 | 0 | 41.2 | got: "export const RETRIES = 3;\nexport const TIMEOUT = 30;\nexport const BACKOFF = 3;\n" |
-| 1 | 09-edit-big-file | ❌ | 2 | 1 | 125 | 296.9 | changed=false sentinels=true size=true neighbors=true |
-| 1 | 10-constraint | ✅ | 5 | 4 | 36 | 130.4 | codeIntact=true commentAdded=true |
-| 2 | 01-hello-tool | ✅ | 2 | 1 | 18 | 32.8 | usedListTool=true namedBoth=true |
-| 2 | 02-read-answer | ✅ | 2 | 1 | 2 | 27.9 | finalText=8080 |
-| 2 | 03-fix-test | ❌ | 2 | 1 | 0 | 34.1 | test failed: exit 1 |
-| 2 | 04-add-function | ✅ | 10 | 9 | 0 | 340.7 | node --test exit 0 |
-| 2 | 05-rename | ❌ | 6 | 5 | 0 | 112.4 | stillOld=[calc.js,cart.js,report.js] missingNew=[calc.js,cart.js,report.js] |
-| 2 | 06-find-def | ✅ | 2 | 1 | 6 | 34.3 | finalText=src/finance/tax.js |
-| 2 | 07-find-vuln | ✅ | 3 | 2 | 233 | 104.7 | mentionedInjection=true :: ## Security Vulnerability: SQL Injection
+| 1 | 01-hello-tool | ✅ | 2 | 1 | 16 | 50.2 | usedListTool=true namedBoth=true |
+| 1 | 02-read-answer | ✅ | 1 | 0 | 2 | 26 | finalText=8080 |
+| 1 | 03-fix-test | ✅ | 3 | 2 | 0 | 76.2 | node --test exit 0 |
+| 1 | 04-add-function | ✅ | 12 | 11 | 175 | 385.1 | node --test exit 0 |
+| 1 | 05-rename | ❌ | 12 | 16 | 0 | 342.4 | stillOld=[report.js] missingNew=[report.js] |
+| 1 | 06-find-def | ❌ | 5 | 4 | 0 | 133.4 | finalText= |
+| 1 | 07-find-vuln | ✅ | 1 | 0 | 272 | 67 | mentionedInjection=true :: ## Security Audit: routes.js
 
-**Location:** `routes.js`, line 6
+### Critical Vulnerability: SQL Injection
 
-```javascript
-const row |
-| 2 | 08-edit-precision | ✅ | 4 | 3 | 23 | 99.3 | byte-exact |
-| 2 | 09-edit-big-file | ❌ | 8 | 7 | 296 | 457.9 | changed=false sentinels=true size=true neighbors=true |
-| 2 | 10-constraint | ✅ | 5 | 4 | 0 | 120 | codeIntact=true commentAdded=true |
+**Location:** `/user` endpo |
+| 1 | 08-edit-precision | ✅ | 2 | 1 | 0 | 46.1 | byte-exact |
+| 1 | 09-edit-big-file | ❌ | 3 | 2 | 391 | 335.9 | changed=false sentinels=true size=true neighbors=true |
+| 1 | 10-constraint | ✅ | 3 | 2 | 27 | 107.4 | codeIntact=true commentAdded=true |
+| 2 | 01-hello-tool | ✅ | 2 | 1 | 19 | 56.6 | usedListTool=true namedBoth=true |
+| 2 | 02-read-answer | ✅ | 1 | 0 | 2 | 33 | finalText=8080 |
+| 2 | 03-fix-test | ✅ | 6 | 5 | 0 | 205.6 | node --test exit 0 |
+| 2 | 04-add-function | ❌ | 2 | 1 | 0 | 76.9 | test failed: exit 1 |
+| 2 | 05-rename | ❌ | 4 | 3 | 0 | 120.1 | stillOld=[calc.js,cart.js,report.js] missingNew=[calc.js,cart.js,report.js] |
+| 2 | 06-find-def | ❌ | 2 | 1 | 0 | 36.6 | finalText= |
+| 2 | 07-find-vuln | ✅ | 1 | 0 | 298 | 75.5 | mentionedInjection=true :: ## Security Audit Findings
 
-**11/20 passed** · avg 116.6s/task
+### CRITICAL: SQL Injection Vulnerability
+
+**Location:** `app.get('/user |
+| 2 | 08-edit-precision | ✅ | 2 | 1 | 2 | 59.4 | byte-exact |
+| 2 | 09-edit-big-file | ❌ | 2 | 1 | 693 | 324.8 | changed=false sentinels=true size=true neighbors=true |
+| 2 | 10-constraint | ✅ | 2 | 1 | 0 | 67.3 | codeIntact=true commentAdded=true |
+
+**13/20 passed** · avg 131.3s/task

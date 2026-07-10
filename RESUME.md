@@ -61,12 +61,14 @@ Run: `npm test` (bare `node --test`, offline) · `node eval/scorecard.js` (loads
 
 ## OPEN WORK (2026-07-10 end-of-session — next session starts here)
 
-### 1. Lever A/B eval (decide keep/revert)
-A full matrix run (2×10×2, levers active) was in flight at session end. `git status eval/` —
-if scorecard files changed: compare vs the committed baseline (`git show HEAD:eval/scorecard.md`),
-decide per-lever keep/revert (few-shot lengthened every prompt — could be net slower; only the
-table decides), commit results + verdict. If unchanged, the run died: re-run
-`node eval/scorecard.js` (~1h, warn owner: loads both models).
+### 1. Lever A/B eval — DONE 2026-07-10, verdict: KEEP ALL THREE LEVERS
+Measured (2×10×2, same protocol as baseline): qwen3.5:4b 11/20 → **13/20** (avg 116.6s → 131.3s),
+qwen2.5-coder:3b 6/20 → **10/20** (avg ~flat 22.1s). fix-test went 0/2 → 2/2 on 3.5:4b (preload
+of the named file unlocked a previously-impossible class); read-answer now 1 turn (read turn
+eliminated); edit-precision 2/2 both models. Cost: 3.5:4b ~13% slower per task (longer prompt
+prefill) — accepted for +2/+4 passes. **Open regression to investigate: 06-find-def 2/2 → 0/2 on
+qwen3.5:4b only** (coder:3b still 2/2) — suspect preload/few-shot interaction; check the session
+JSONLs before touching code.
 
 ### 2. UI rework (owner spec, 2026-07-10)
 - **Statusbar invisible on owner's terminal — debug FIRST, before any redesign**: ask which

@@ -1,10 +1,12 @@
 import { readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import * as readline from 'node:readline/promises';
 
 import { loadConfig, defaultPaths } from './config.js';
 import { EndpointError } from './provider.js';
 import { createAgent } from './agent.js';
+import { createDeltaRenderer } from './ui.js';
 
 const USAGE = `kaku — fully-local coding agent
 
@@ -83,11 +85,13 @@ export async function main(argv = process.argv.slice(2), { cwd = process.cwd() }
     return 1;
   }
 
+  const confirmRef = { fn: null };
   let agent;
   try {
     agent = await createAgent(config, {
       cwd,
       sessionDir: expandTilde(config.sessionDir),
+      confirm: (req) => (confirmRef.fn ? confirmRef.fn(req) : false),
       resume: parsed.resume ?? undefined,
     });
   } catch (err) {
@@ -100,17 +104,82 @@ export async function main(argv = process.argv.slice(2), { cwd = process.cwd() }
   for (const w of agent.warnings) console.error(`warning: ${w}`);
 
   if (parsed.task !== null) return runOnce(agent, parsed.task);
-
-  console.error('REPL is not built yet — run a one-shot task: kaku -p "task"');
-  return 1;
+  return runRepl(agent, { confirmRef });
 }
 
 async function runOnce(agent, task) {
-  const res = await agent.run(task, { onDelta: (text) => process.stdout.write(text) });
+  const renderer = createDeltaRenderer((s) => process.stdout.write(s));
+  const res = await agent.run(task, { onDelta: (t) => renderer.push(t) });
+  renderer.flush();
   process.stdout.write('\n');
   if (res.status === 'done') return 0;
   console.error(`[${res.status}]${res.error ? ` ${res.error}` : ''}`);
   return 1;
+}
+
+export async function runRepl(agent, {
+  input = process.stdin,
+  output = process.stdout,
+  errput = process.stderr,
+  confirmRef = { fn: null },
+} = {}) {
+  const rl = readline.createInterface({ input, output });
+  let abort = null;
+  let questionAbort = null;
+  let exiting = false;
+  let lastInterrupt = 0;
+
+  confirmRef.fn = async ({ command, class: cls }) => {
+    const answer = await rl
+      .question(`\nallow ${cls} command: ${command}\n[y/N] `, abort ? { signal: abort.signal } : {})
+      .catch(() => 'n');
+    return /^y(es)?$/i.test(answer.trim());
+  };
+
+  const onInterrupt = () => {
+    const now = Date.now();
+    const doublePress = now - lastInterrupt < 1000;
+    lastInterrupt = now;
+    if (abort) {
+      if (doublePress) exiting = true;
+      abort.abort();
+    } else {
+      exiting = true;
+      questionAbort?.abort();
+    }
+  };
+  process.on('SIGINT', onInterrupt);
+  rl.on('SIGINT', onInterrupt);
+
+  try {
+    while (!exiting) {
+      questionAbort = new AbortController();
+      let line;
+      try {
+        line = await rl.question('kaku> ', { signal: questionAbort.signal });
+      } catch {
+        break;
+      } finally {
+        questionAbort = null;
+      }
+      const task = line.trim();
+      if (!task) continue;
+      if (task === 'exit' || task === 'quit') break;
+
+      abort = new AbortController();
+      const renderer = createDeltaRenderer((s) => output.write(s));
+      const res = await agent.run(task, { signal: abort.signal, onDelta: (t) => renderer.push(t) });
+      abort = null;
+      renderer.flush();
+      output.write('\n');
+      if (res.status !== 'done') errput.write(`[${res.status}]${res.error ? ` ${res.error}` : ''}\n`);
+    }
+  } finally {
+    process.removeListener('SIGINT', onInterrupt);
+    confirmRef.fn = null;
+    rl.close();
+  }
+  return 0;
 }
 
 function expandTilde(path) {

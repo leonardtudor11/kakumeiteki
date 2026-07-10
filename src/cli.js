@@ -104,7 +104,7 @@ export async function main(argv = process.argv.slice(2), { cwd = process.cwd() }
       resume: parsed.resume ?? undefined,
     });
   } catch (err) {
-    if (err instanceof EndpointError || /no resumable session/.test(err.message)) {
+    if (err instanceof EndpointError || /no resumable session|not implemented|corrupt session/.test(err.message)) {
       console.error(err.message);
       return 1;
     }
@@ -192,12 +192,21 @@ export async function runRepl(agent, {
       abort = new AbortController();
       const renderer = createDeltaRenderer((s) => output.write(s));
       bar.setState({ busy: true });
-      const res = await agent.run(task, { signal: abort.signal, onDelta: (t) => renderer.push(t) });
+      let res;
+      try {
+        res = await agent.run(task, { signal: abort.signal, onDelta: (t) => renderer.push(t) });
+      } catch (err) {
+        res = { status: 'error', error: err.message };
+      }
       bar.setState({ busy: false });
       abort = null;
       renderer.flush();
       output.write('\n');
-      if (res.status !== 'done') errput.write(`[${res.status}]${res.error ? ` ${res.error}` : ''}\n`);
+      if (res.status === 'error') {
+        errput.write(`[error] ${res.error}\nsession saved at ${agent.session.path} — resume with --continue\n`);
+      } else if (res.status !== 'done') {
+        errput.write(`[${res.status}]${res.error ? ` ${res.error}` : ''}\n`);
+      }
     }
   } finally {
     process.removeListener('SIGINT', onInterrupt);

@@ -19,6 +19,7 @@ export function preloadNamedFiles(task, { jail, maxFiles = 2, maxBytes = 6144 } 
     } catch {
       continue;
     }
+    if (isSecretPath(abs)) continue;
     let stat;
     try {
       stat = statSync(abs);

@@ -10,6 +10,7 @@ export async function runTurn({ provider, session, tools = {}, messages, userInp
   let lastSig = null;
   let sameCount = 0;
   let nudged = false;
+  let emptyNudged = false;
 
   try {
     for (let turn = 0; turn < maxTurns; turn++) {
@@ -41,7 +42,19 @@ export async function runTurn({ provider, session, tools = {}, messages, userInp
       }
       awaitingRepair = false;
 
-      if (!calls.length) return { status: 'done', message: assistant };
+      if (!calls.length) {
+        if (!(assistant.content ?? '').trim()) {
+          if (emptyNudged) {
+            session.append('empty_answer', {});
+            return { status: 'empty_answer' };
+          }
+          emptyNudged = true;
+          session.append('empty_nudge', {});
+          messages.push({ role: 'user', content: '[your reply was empty] Give the final answer now as plain text — one line of result plus what you verified.' });
+          continue;
+        }
+        return { status: 'done', message: assistant };
+      }
 
       const sig = JSON.stringify(calls.map((c) => [c.name, c.args]));
       if (sig === lastSig) sameCount++;

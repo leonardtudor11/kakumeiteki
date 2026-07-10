@@ -39,6 +39,7 @@ const SECRET_BASENAMES = [
   /^\.(netrc|npmrc|pypirc)$/,
   /credentials.*\.json$/,
   /^secrets\./,
+  /_history$/,
 ];
 
 export function isSecretPath(path) {
@@ -133,8 +134,18 @@ export function splitSegments(command) {
     if (c === '>') {
       let j = i + 1;
       if (command[j] === '>') j++;
-      while (command[j] === ' ') j++;
-      if (command[j] === '&') { i = j + 1; continue; }
+      while (command[j] === ' ' || command[j] === '\t') j++;
+      if (command[j] === '&') {
+        // >&N / >&- duplicates a descriptor; >&FILE redirects stdout+stderr to FILE
+        if (/[0-9-]/.test(command[j + 1] ?? '')) {
+          j++;
+          while (/[0-9-]/.test(command[j] ?? '')) j++;
+          i = j;
+          continue;
+        }
+        j++;
+        while (command[j] === ' ' || command[j] === '\t') j++;
+      }
       let target = '';
       let quote = null;
       while (j < command.length) {
@@ -239,8 +250,24 @@ function classifySegment(seg, jail) {
     if (seg.hasSubstitution) return { class: 'ask', reason: 'command substitution' };
     if (cmd === 'eval') return { class: 'ask', reason: 'eval' };
     if (secretArg) return { class: 'ask', reason: `touches potential secret file: ${secretArg.text}` };
+    if (base.class === 'read-only' && jail) {
+      const outside = rest.find((w) => !w.quoted && isOutsideJailPath(w.text, jail));
+      if (outside) return { class: 'ask', reason: `reads outside the project: ${outside.text}` };
+    }
   }
   return base;
+}
+
+function isOutsideJailPath(text, jail) {
+  if (text === '~' || text.startsWith('~/') || text.includes('$HOME')) return true;
+  if (!text.startsWith('/')) return false;
+  if (text === '/dev/null') return false;
+  try {
+    jail.resolve(text);
+    return false;
+  } catch {
+    return true;
+  }
 }
 
 function classifyRm(rest, jail) {

@@ -55,8 +55,10 @@ runTurn (loop.js), per iteration:
   every step appends a typed event to the session JSONL (session.js)
 ```
 
-Statuses `runTurn` can return: `done`, `protocol_failed`, `doom_loop`, `cancelled`,
-`endpoint_error`, `turn_cap`. See DEBUGGING.md for what each signature means.
+Statuses `runTurn` can return: `done`, `protocol_failed`, `doom_loop`, `empty_answer`,
+`cancelled`, `endpoint_error`, `turn_cap`. See DEBUGGING.md for what each signature means.
+`done` means the protocol completed with a non-empty answer — it does not certify the
+answer is correct; that is what verify steps and the eval suite are for.
 
 ## The contracts that hold it together
 

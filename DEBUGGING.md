@@ -29,6 +29,8 @@ grep -o '"type":"[a-z_]*"' <id>.jsonl | sort | uniq -c    # event histogram
 | `protocol_failed` | second consecutive parse failure — turn abandoned | `message` |
 | `doom_nudge` | 3 identical calls (same name + args) — corrective nudge injected | `signature` |
 | `doom_loop` | the nudge didn't help — turn aborted | `signature` |
+| `empty_nudge` | model ended its turn with empty text — asked once for a real answer | — |
+| `empty_answer` | still empty after the nudge — turn failed (NOT reported as done) | — |
 | `compaction` | context budget exceeded mid-run | `before`, `after`, `dropped` |
 | `cancelled` | Ctrl-C / AbortController mid-turn | — |
 | `endpoint_error` | model endpoint died after retries | `message` |

@@ -26,7 +26,17 @@ function sessionHandle(path, now) {
 }
 
 export function readSession(path) {
-  const lines = readFileSync(path, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
+  const raw = readFileSync(path, 'utf8').split('\n').filter(Boolean);
+  const lines = [];
+  for (const [i, line] of raw.entries()) {
+    try {
+      lines.push(JSON.parse(line));
+    } catch (err) {
+      // a crash mid-append leaves one truncated trailing line — recoverable; anything else is real corruption
+      if (i === raw.length - 1) break;
+      throw new Error(`corrupt session line ${i + 1} in ${path}: ${err.message}`);
+    }
+  }
   return { header: lines[0], events: lines.slice(1) };
 }
 
@@ -54,6 +64,11 @@ export function rebuildMessages(events) {
         messages.push({ role: 'assistant', content: e.content ?? '', toolCalls: e.toolCalls ?? [] });
         pending = [...(e.toolCalls ?? [])];
         break;
+      case 'tool_call':
+        // fenced-protocol tiers carry the call in text, not toolCalls — track it here so a
+        // crash between tool_call and tool_result still synthesizes [interrupted] on resume
+        if (!pending.some((p) => p.name === e.name)) pending.push({ name: e.name, args: e.args });
+        break;
       case 'tool_result':
         messages.push({ role: 'tool', name: e.name, content: e.output ?? '' });
         if (pending.length) pending.shift();
@@ -63,6 +78,9 @@ export function rebuildMessages(events) {
         break;
       case 'doom_nudge':
         messages.push({ role: 'user', content: '[loop guard] repeated tool call detected — try a different approach.' });
+        break;
+      case 'empty_nudge':
+        messages.push({ role: 'user', content: '[your reply was empty] Give the final answer now as plain text — one line of result plus what you verified.' });
         break;
       default:
         break;

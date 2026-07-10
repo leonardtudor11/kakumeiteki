@@ -1,4 +1,5 @@
 import { SPLASH, SMALL } from './mask-data.js';
+import { modeMeta } from './statusbar.js';
 
 const PALETTE = {
   K: [26, 26, 30],     // helmet bowl + outlines — near-black
@@ -159,4 +160,21 @@ export async function showBanner(output, { version = '', animate = true, sleep =
   const redTitle = apple ? '\x1b[1;38;5;160m' : '\x1b[1;38;2;192;57;43m';
   output.write(`\n${indent}${pad}${redTitle}${title}${RESET}\n`);
   output.write(`${indent}\x1b[2m革命的 — fully-local coding agent${version ? ` · v${version}` : ''}${RESET}\n\n`);
+}
+
+// Welcome card shown once after the splash: the active session (model · mode · permissions)
+// and the honest capability lines (from README "What to honestly expect"). No mask here —
+// a small half-block mask renders rough in a real terminal font; the splash carries the art.
+export function showWelcome(output, { model = '', mode = '', permissions = '', indent = '  ' } = {}) {
+  const m = modeMeta(mode);
+  const DIM = '\x1b[2m';
+  const session = `${model}${mode ? ` ${DIM}·${RESET} ${m.color}${m.kanji} ${mode}${RESET}` : ''}${permissions ? ` ${DIM}·${RESET} ${DIM}${permissions}${RESET}` : ''}`;
+  const lines = [
+    `${indent}${session}`,
+    '',
+    `${indent}${DIM}reliable${RESET}   read · explain · find · single precise edits`,
+    `${indent}${DIM}caution${RESET}    verify every diff ${DIM}— a small model can be confidently wrong${RESET}`,
+    '',
+  ];
+  for (const l of lines) output.write(`${l}\n`);
 }

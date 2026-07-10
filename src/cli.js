@@ -8,9 +8,8 @@ import { EndpointError } from './provider.js';
 import { createAgent } from './agent.js';
 import { createDeltaRenderer } from './ui.js';
 import { runDoctor } from './doctor.js';
-import { showBanner } from './banner.js';
-import { createStatusBar } from './statusbar.js';
-import { countMessages } from './context.js';
+import { showBanner, showWelcome } from './banner.js';
+import { runReplInteractive } from './tui.js';
 
 const USAGE = `kaku — fully-local coding agent
 
@@ -114,7 +113,9 @@ export async function main(argv = process.argv.slice(2), { cwd = process.cwd() }
 
   if (parsed.task !== null) return runOnce(agent, parsed.task);
   if (process.stdout.isTTY && !process.env.KAKU_PLAIN && !process.env.NO_COLOR) {
-    await showBanner(process.stdout, { version: readVersion() });
+    const version = readVersion();
+    await showBanner(process.stdout, { version });
+    showWelcome(process.stdout, { version, model: config.model, mode: config.mode, permissions: config.permissions });
   }
   return runRepl(agent, { confirmRef, config });
 }
@@ -129,7 +130,18 @@ async function runOnce(agent, task) {
   return 1;
 }
 
-export async function runRepl(agent, {
+// Interactive terminals get the rich editor (src/tui.js); pipes/tests get the plain
+// readline loop below (keeps output clean and behaviour deterministic for the test suite).
+export async function runRepl(agent, opts = {}) {
+  const { input = process.stdin, output = process.stdout } = opts;
+  const env = process.env;
+  if (input.isTTY && output.isTTY && !env.KAKU_PLAIN && !env.NO_COLOR) {
+    return runReplInteractive(agent, opts);
+  }
+  return runReplPlain(agent, opts);
+}
+
+async function runReplPlain(agent, {
   input = process.stdin,
   output = process.stdout,
   errput = process.stderr,
@@ -137,16 +149,6 @@ export async function runRepl(agent, {
   config = {},
 } = {}) {
   const rl = readline.createInterface({ input, output });
-  const bar = createStatusBar({
-    output,
-    getCtxPct: () => {
-      const input_ = agent.budget?.input;
-      if (!input_) return 0;
-      return Math.min(100, Math.round((countMessages(agent.messages ?? []) / input_) * 100));
-    },
-  });
-  bar.start();
-  bar.setState({ model: config.model ?? '', mode: config.mode ?? '' });
   let abort = null;
   let questionAbort = null;
   let exiting = false;
@@ -191,14 +193,12 @@ export async function runRepl(agent, {
 
       abort = new AbortController();
       const renderer = createDeltaRenderer((s) => output.write(s));
-      bar.setState({ busy: true });
       let res;
       try {
         res = await agent.run(task, { signal: abort.signal, onDelta: (t) => renderer.push(t) });
       } catch (err) {
         res = { status: 'error', error: err.message };
       }
-      bar.setState({ busy: false });
       abort = null;
       renderer.flush();
       output.write('\n');
@@ -211,7 +211,6 @@ export async function runRepl(agent, {
   } finally {
     process.removeListener('SIGINT', onInterrupt);
     confirmRef.fn = null;
-    bar.stop();
     rl.close();
   }
   return 0;

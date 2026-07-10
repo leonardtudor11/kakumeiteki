@@ -10,7 +10,7 @@
 // on Apple_Terminal (which mangles 24-bit truecolour), maps to xterm-256. '.' = transparent.
 //
 // SPLASH 76x78 (39 rows) — startup hero, shown once.
-// SMALL  20x20 (10 rows) — everyday welcome accent.
+// SMALL  24x24 (12 rows) — everyday welcome accent.
 // TINY   12x12 (6 rows) — prompt snippet.
 
 export const SPLASH = {
@@ -99,30 +99,34 @@ export const SPLASH = {
   ],
 };
 export const SMALL = {
-  w: 20, h: 20,
-  chars: 'KDSWGORXMBCE',
-  palette: [[32,24,23], [75,29,23], [78,70,65], [107,47,38], [139,54,47], [114,95,65], [119,116,113], [147,98,37], [203,152,64], [155,132,118], [200,169,84], [206,180,108]],
+  w: 24, h: 24,
+  chars: 'KDSWGORXMBCEFHJL',
+  palette: [[4,3,3], [83,25,26], [119,33,36], [83,42,43], [115,115,113], [155,73,34], [214,108,44], [227,127,70], [190,189,184], [250,121,107], [224,222,208], [249,230,124], [223,222,217], [252,120,107], [251,229,124], [251,230,124]],
   rows: [
-    '...S............S...',
-    '...C.....GG.....C...',
-    '..SEO..SSGGSS...EO..',
-    '...CEOSKKGGKKS.CMW..',
-    '...XMCKKDGGWKKCMX...',
-    '....XKKKWOOWKKKX....',
-    '....KKKWWMMGWKKK....',
-    '..DGGGGWWGXWGGGGGW..',
-    '...DDWWWWWWWWWDDD...',
-    '...GDKKKKDDDKKKDG...',
-    '...WKSKXWKKKXKRKW...',
-    '..GGKOBRRSSRRRRKGX..',
-    '..GDKSBRSBBSRBSKDG..',
-    '.XGDKSSSRSSROOSKDGX.',
-    'XMXKKKOSSKKSKRKKKWMX',
-    '..XWKDDDDDDDDKKKDXW.',
-    '...K..DRSSSSOD..K...',
-    '.......DRXXRD.......',
-    '........DWGD........',
-    '.........DD.........',
+    '....K..............K....',
+    '...KJ..............LK...',
+    '...JJ.....KHSK.....EE...',
+    '...RJK..KWKSSKWK..KER...',
+    '...KEEJKWWWSSKWWGLERR...',
+    '....RRJKKKHSSKKKWERR....',
+    '....KRKKKKSSSSKKKWRR....',
+    '.....KKKKHKLEKSKKKK.....',
+    '....KKKKSSKORKSHKBKKK...',
+    '...SSHHSSSSKKSSSSHBSS...',
+    '....KKKKKKSSSSKHKKDK....',
+    '....HKKKKKKKKKKKKKDH....',
+    '...KDKKKKXKKKKKKKGKKK...',
+    '...HSKGGKKGGGKKCGGKSH...',
+    '..KSKKGFFFGMMGCCCGKDSK..',
+    '.KHSKKKGKGKKMKGKCGKKHHK.',
+    '.LSSKKKGGKCKKCCGGKKKDSL.',
+    'KRXKKKKKKKKKKKKKKKKKKRRK',
+    '..OOKKKSKKKKKKKKWKKKOO..',
+    '....K..KKKKKKKKKS..K....',
+    '........SGCKKFGS........',
+    '.........SKXXKS.........',
+    '..........KHHK..........',
+    '...........KS...........',
   ],
 };
 export const TINY = {

@@ -53,6 +53,15 @@ export async function createAgent(config, { cwd = process.cwd(), sessionDir, con
     budget,
     warnings,
     messages,
+    get mode() { return config.mode; },
+    // Change mode mid-session: rebuild the system message so the next turn's behaviour
+    // follows the new mode (build/refactor/audit/plan). Used by the interactive REPL's
+    // Shift+Tab mode cycle.
+    setMode(newMode) {
+      config.mode = newMode;
+      messages[0] = { role: 'system', content: buildSystemPrompt({ tier, mode: newMode, tools: Object.values(tools), cwd: jail.root }) };
+      return newMode;
+    },
     async run(task, { signal, onDelta, maxTurns = config.maxTurns } = {}) {
       const userInput = `${task}${preloadNamedFiles(task, { jail })}`;
       return runTurn({ provider, session, tools, messages, userInput, signal, onDelta, maxTurns, budget });

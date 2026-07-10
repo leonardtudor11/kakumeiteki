@@ -261,7 +261,7 @@ Then the 3 probe prompts above (supplied at execution). Rollback: `ollama rm`.
 Model guidance by RAM (reference, not commitment — refreshed 2026-07-10 via web research):
 | RAM | Daily driver | Stretch |
 |---|---|---|
-| 8 GB (now) | **qwen3.5:4b** (~2.5 GB Q4) — newer, better instruction-following + tool-calling than qwen2.5-coder:3b at similar footprint; 2.5-coder:3b kept as fallback | qwen2.5-coder:7b (4.7 GB Q4) — works, swaps, close other apps |
+| 8 GB (now) | **qwen3.5:4b** (3.4 GB, verified on pull — multimodal 4B, heavier than a text-only 4B; fits 8 GB with 8k ctx but close other apps) — newer, better instruction-following + tool-calling than qwen2.5-coder:3b at similar footprint; 2.5-coder:3b kept as fallback | qwen2.5-coder:7b (4.7 GB Q4) — works, swaps, close other apps |
 | 16 GB | qwen2.5-coder:7b / qwen3.5:8b | 14B q4 |
 | 32 GB+ | qwen3-coder 30B-A3B MoE / Qwen3.6-27B dense | 32B dense |
 

@@ -106,7 +106,7 @@ Run conditions: M1 8 GB, Ollama, one model resident at a time, 2026-07-10.
 
 Phase 0 was a 2-model convenience bake-off, not a survey. Refreshed the field via web search (my training cutoff Jan 2026 was ~6 months stale). Findings:
 
-- **New default candidate: `qwen3.5:4b`** (~2.5 GB Q4) — newer than qwen2.5-coder:3b, reported stronger instruction-following + tool-calling (Unsloth chat-template fixes), fits 8 GB comfortably. Adopted as config default; qwen2.5-coder:3b retained as fallback.
+- **New default candidate: `qwen3.5:4b`** (3.4 GB, verified on pull — multimodal 4B, heavier than a text-only 4B; my ~2.5 GB pre-pull estimate was wrong) — newer than qwen2.5-coder:3b, reported stronger instruction-following + tool-calling (Unsloth chat-template fixes). Fits 8 GB with 8k ctx but needs other apps closed. Adopted as config default; qwen2.5-coder:3b (1.9 GB) retained as fallback and the lighter option under memory pressure.
 - **Gemma 4 rejected**: fails tool-calls / agentic work per HN + r/LocalLLaMA — disqualifying for a tool-driven harness.
 - **Qwen3.6 (27B/35B-A3B)** is the mid-2026 coding leader but too big for 8 GB.
 - **Ollama now MLX-backed on Apple Silicon** (official preview): +15–30% throughput, −10% memory. Update Ollama.

@@ -30,6 +30,25 @@ export function createJail(projectRoot) {
   };
 }
 
+const SECRET_DIRS = new Set(['.ssh', '.aws', '.gnupg']);
+const SECRET_ENV_EXCEPTIONS = new Set(['.env.example', '.env.sample', '.env.template']);
+const SECRET_BASENAMES = [
+  /^\.env(\..+)?$/,
+  /\.(pem|key|p12|pfx|jks|keystore)$/,
+  /^id_(rsa|ecdsa|ed25519)/,
+  /^\.(netrc|npmrc|pypirc)$/,
+  /credentials.*\.json$/,
+  /^secrets\./,
+];
+
+export function isSecretPath(path) {
+  const segments = path.split(sep).filter(Boolean);
+  const base = segments.at(-1) ?? '';
+  if (segments.some((segment) => SECRET_DIRS.has(segment))) return true;
+  if (SECRET_ENV_EXCEPTIONS.has(base)) return false;
+  return SECRET_BASENAMES.some((re) => re.test(base));
+}
+
 function realDeepest(abs) {
   let existing = abs;
   const tail = [];

@@ -32,6 +32,16 @@ Off by default — v1's "zero network except model endpoint" stays the shipped p
 
 `npm link` (or a symlink into `~/.local/bin`) so `kaku` opens in any project directory, like `claude` does. Trivial once bin/kaku.js exists — document in README at Phase 7.
 
+## 4b. Editor integration
+
+Day-one reality: kaku is a CLI, so it already runs inside any editor's integrated terminal (VS Code, Cursor, Zed, JetBrains) with zero approvals. Beyond that, in order of effort:
+
+1. **Local .vsix** — package a thin VS Code extension that opens kaku in a terminal panel; install with `code --install-extension kaku.vsix`. Private, no store, no account, no review.
+2. **VS Code Marketplace / Open VSX** — free publisher account (Microsoft / Eclipse), automated verification only — no App-Store-style gatekeeping. Open VSX also covers Cursor, VSCodium, Windsurf.
+3. **JetBrains Marketplace** — needs a Kotlin/Java plugin wrapper + short human moderation (~days). Only worth it on real demand.
+
+Architecture rule: the extension stays a dumb shell around the CLI (spawn `kaku`, render its stream) — exactly how Claude Code's own VS Code extension works. No logic forks into the extension.
+
 ## 5. Knowledge layer — how the doctrine stays real and compounds
 
 The fear this answers: a small model hallucinating confident advice. The doctrine files

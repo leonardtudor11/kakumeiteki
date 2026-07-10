@@ -120,9 +120,39 @@ change: scorecard doesn't improve → the change doesn't ship.
 Growth curve to expect: compounding-linear (every solved bug = one retrievable lesson +
 one regression test), not exponential. Verification is what keeps the curve real.
 
+## 5b. Latency & turn-reduction (owner asked 2026-07-10 — "make trivial tasks faster")
+
+Distinct from the knowledge layer above: RAG improves *correctness*, NOT speed on mechanical
+tasks. Measured baseline: qwen3.5:4b took 8 turns / 7 tool calls / 163s for a one-word edit
+on M1 8GB (~20s/turn = cold load + full-history reprocess + decode). Levers, ranked ROI:
+
+1. **Pre-load named files (★★★, do early).** If the task names files that exist in-repo,
+   attach their contents (jail-read, size-capped) to the FIRST user message so the model
+   skips the separate read turn(s). Biggest single turn-count win. Guard: only files under
+   a size cap, only when the name resolves in-jail, never secret-glob files.
+2. **Few-shot the read→edit→done flow in the prompt (★★★).** Small models imitate examples
+   far better than they parse rules. One worked example of the exact tool sequence cuts
+   fumbling and premature/again reads. Keep it inside the micro token budget.
+3. **Explicit early-stop (★★).** "Once the edit is applied AND you have verified it, stop —
+   do not re-read or re-confirm." The 8-turn run trailed past done.
+4. **Runtime: keep model warm + MLX + quantized KV + tight num_ctx (★★).** `keep_alive` avoids
+   reload between turns; MLX backend −15-30%; q8 KV cache + smallest workable num_ctx = less
+   to reprocess each turn. **Phase 4 (context budget + compaction) directly delivers the
+   num_ctx half of this** — smaller context = faster turns, so the speed fix is partly on the
+   critical path already.
+5. **Multi-model routing (★ later, see §6).** 1.5B for mechanical/search turns, escalate to
+   4B+ for reasoning. Real win, needs eval data first so it's not a guess.
+6. **Deterministic fast-path (★ narrow).** A pure literal rename / single-string replace with
+   an unambiguous target doesn't need a model at all — detect that shape and apply it directly.
+   Narrow scope; do not let it swallow judgment tasks.
+
+Sequencing: 1-3 are cheap prompt/agent-layer changes worth doing right after Phase 4 (they need
+the context-preload plumbing Phase 4 introduces). 4 is ops/config. 5-6 wait for the eval scorecard.
+
 ## 6. Later, if earned
 
 - Multi-model routing: cheap model for search/summarize turns, big model for edits (needs eval data first).
+- Speculative decoding (tiny draft model accelerates a bigger one) — if the runtime supports it and eval shows net speedup.
 - MCP client support for external tools.
 - Sub-agent `spawn` beyond max tier's basic version: parallel read-only explorers.
 - Patch-format edits (unified diff) once eval shows a model that can emit them reliably.

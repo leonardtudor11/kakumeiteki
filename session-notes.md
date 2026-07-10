@@ -146,3 +146,21 @@ Commits `d6ae193..c61b3f1`. Suite: **249 offline pass / 0 fail**.
 - **IMPROVE 5.1b doctrine layer shipped**: 9 cited playbooks in skills/ (auth, payments, resilience, scalability, rag, secrets-ops, observability, operations + safe-coding extension of security.md) + built-in read-only `skill` tool (serves from the tool's own install dir — deliberate, whitelisted out-of-jail read). Registry line rides the tool list. **Live-verified**: qwen3.5:4b consulted payments playbook and answered from it.
 - Docs refreshed to stay gate-truthful; playbook lint test enforces size + Sources on every doctrine file.
 - **History purge BLOCKED by permission classifier** (git filter-repo = destructive, needs explicitly named owner approval). Backup bundle ready at .claude/pre-purge-2026-07-10.bundle; replacements file prepared. Awaiting owner's explicit go.
+
+## 2026-07-11 (later) — refactor review shipped + find-def triage closed
+
+Commits `ed0620d..5a2b52f` (6). Suite: **268 tests, 267 pass, 1 skip, 0 fail** (net −3 dead tests, +2 new).
+
+**Refactor review (owner-approved R1–R8, all shipped):**
+- R1+R2 `ed0620d`: dead hand-drawn mask pipeline (MASK/PALETTE/renderMaskRows) + unused TINY grid removed — −121 lines; grid tests already covered the render invariants.
+- R3 `31f18b5`: ANSI constants single-sourced in statusbar.js (was 3× duplicated).
+- R4 `ae4c1c4`: REAL BUG — cursor rendered on the box border when prompt+line filled the width exactly; layout math now pure `boxLayout()` (+1 cursor cell, trailing space materializes the wrap), regression-tested.
+- R8 `f696552`: forward-delete key.
+- R5 `ad4f499`: `runTurn()` in ui.js dedupes the 3× renderer+error-report block (tui loop / plain loop / one-shot); -p mid-run provider errors now report uniformly instead of raw throw.
+- R6+R7 `809f6bf`: banner gate now matches editor gate (piped stdin → no chrome); dead `version` param dropped.
+- Pinned-bar-during-streaming caveat: KEEP AS-IS (decision, not omission) — DECSTBM measured-glitchy, delta-repaint = the partial-line bug class; box returns instantly post-turn.
+
+**Phase 0 — 06-find-def "regression" triage: NOT REPRODUCIBLE, verdict variance.**
+6/6 fresh live runs pass on qwen3.5:4b (32–56s, clean grep→answer); 2/6 rescued by empty-reply nudge. A/B's 0/2 at n=2 was noise around that wobble, not lever damage. Levers stay. Eval runner now keeps failed runs' transcripts (`5a2b52f`) so the next anomaly is replayable — n per cell should rise when scorecard runs matter (measurement track).
+
+**Next**: Phase 2 of the stronger+safe plan — safety net (pre-edit backups + `kaku undo` first step), drip execution, awaiting go.

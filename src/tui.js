@@ -160,6 +160,7 @@ export async function runReplInteractive(agent, {
     input.removeListener('end', onEnd);
     output.removeListener?.('resize', onResize);
     input.setRawMode?.(false);
+    input.pause?.(); // release the event-loop ref — without this the process never exits (bin sets exitCode, no forced exit)
     confirmRef.fn = null;
     clearBox();
     output.write('\n');

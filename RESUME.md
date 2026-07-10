@@ -58,3 +58,39 @@ Run: `npm test` (bare `node --test`, offline) · `node eval/scorecard.js` (loads
 - Awesome + free-to-copy (MIT), zero personal peril: no payment/auth/telemetry INSIDE the
   tool; it may KNOW about those domains via doctrine (IMPROVE.md §5.1b).
 - Never sudo; never touch secret values.
+
+## OPEN WORK (2026-07-10 end-of-session — next session starts here)
+
+### 1. Lever A/B eval (decide keep/revert)
+A full matrix run (2×10×2, levers active) was in flight at session end. `git status eval/` —
+if scorecard files changed: compare vs the committed baseline (`git show HEAD:eval/scorecard.md`),
+decide per-lever keep/revert (few-shot lengthened every prompt — could be net slower; only the
+table decides), commit results + verdict. If unchanged, the run died: re-run
+`node eval/scorecard.js` (~1h, warn owner: loads both models).
+
+### 2. UI rework (owner spec, 2026-07-10)
+- **Statusbar invisible on owner's terminal — debug FIRST, before any redesign**: ask which
+  terminal app + window size; test scroll region live (`printf '\x1b7\x1b[1;20r\x1b8'`);
+  Terminal.app fakes truecolor and may mishandle DECSTBM. Fallback design if broken: inline
+  status line printed after each turn instead of a pinned bar.
+- **Banner too big**: target ≤10 char rows total. Options: crop mask to face, or scale grid.
+- **Mask fidelity**: owner says current render "looks nothing like" the reference
+  (~/Downloads/fierce-samurai-warrior-mask-retro-pixel-art-style_1292377-22955.avif; converted
+  PNG + extraction scripts in the session scratchpad are gone — re-convert with sips). Half-block
+  pixels can't match a smooth 626px image; get closer via better palette/contrast at ~44px, and
+  offer iTerm2 (true truecolor) — optionally OSC-1337 inline-image path (real PNG) when the
+  terminal supports it, pixel-grid fallback otherwise.
+- **Claude-style welcome**: small mask LEFT + right column: KAKUMEITEKI v{x} · model · mode ·
+  1-2 HONEST capability sentences (read/explain/single-file edits; name a playbook for plans;
+  verify diffs). Then during prompting: tiny mask snippet + a salute ("⛩ ganbatte — go build").
+- Keep all of it TTY-gated + KAKU_PLAIN escape. Grid invariants stay tested.
+
+### 3. Direction (owner-agreed, in order, one prompt at a time)
+1. Verified-confidence line (IMPROVE §2): every result ends `done — verified n/m` computed
+   from actual checks. The single highest-trust feature.
+2. Capability ladder: scorecard across 4-6 quantized models that fit 8GB (qwen3.5:4b,
+   qwen2.5-coder:3b, qwen3:4b text-only, a ~1.5B floor, optional q5 variant) → README table
+   "model → measured can/can't". This is the project's honest identity: the instrument.
+3. Perfect the proven small-task classes (explain/find/constraint/single-edit) — speed + polish.
+Honest scope statement stands: NOT a Claude Code replacement; value = private/offline niche +
+measurement instrument + owned artifact.

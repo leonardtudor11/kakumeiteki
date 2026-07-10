@@ -1,17 +1,17 @@
 # KAKUMEITEKI — fully-local coding agent
 
-*"Kakumeiteki" (革命的) = Japanese for "revolutionary". Name chosen by the owner. CLI binary can alias to `kaku` for typing ease — decide at Phase 1.*
+*"Kakumeiteki" (革命的) = Japanese for "revolutionary". CLI binary can alias to `kaku` for typing ease — decide at Phase 1.*
 
 ## Context
 
-Build a coding agent that runs 100% on the local machine: private, $0 marginal cost, model-agnostic. Two hard requirements from the owner:
+Build a coding agent that runs 100% on the local machine: private, $0 marginal cost, model-agnostic. Two hard requirements:
 
 1. **Strong regardless of hardware.** On a weak machine (like this one) it must still be a real product; on a beast machine it unlocks full power. Solved with capability tiers, not one-size-fits-all.
 2. **Encodes the Claude Code harness + way of thinking.** Agent loop, permission-gated tools, read-before-edit, surgical diffs, verify-before-done, context budgeting, honest reporting. The harness discipline is the product — the model is a swappable part.
 
 Output code standard: clean, self-explaining, near-zero comments, structured so any future agent can understand it cold, know what to improve, and how to debug (ARCHITECTURE.md + DEBUGGING.md + IMPROVE.md carry that knowledge, not inline noise).
 
-the owner will taste-test a small model in the morning — plan includes a taste-test path that works before the harness is finished.
+A small-model taste test runs before anything else — the plan includes a taste-test path that works before the harness is finished.
 
 ## Ground truth (re-verified 2026-07-10)
 

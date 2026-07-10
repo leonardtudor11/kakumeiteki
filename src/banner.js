@@ -1,30 +1,53 @@
 const PALETTE = {
-  G: [212, 175, 55],   // kuwagata horns + mouth grill — gold
-  R: [139, 30, 30],    // kabuto bowl — deep crimson
-  r: [192, 57, 43],    // brim highlight
-  S: [75, 85, 99],     // menpō face mask — steel
-  s: [107, 114, 128],  // chin guard — lighter steel
-  W: [232, 220, 192],  // eye slits — bone
+  K: [26, 26, 30],     // helmet bowl + outlines — near-black
+  D: [70, 70, 76],     // dark steel shading
+  S: [150, 152, 158],  // menpō face — silver
+  W: [235, 235, 235],  // fangs + highlights
+  G: [230, 180, 60],   // kuwagata horns + eyes — gold
+  O: [200, 120, 40],   // horn/ornament shading — orange
+  R: [190, 45, 40],    // crest trim + mouth — red
+  X: [110, 25, 25],    // brim + shikoro — maroon
 };
 
-// 25 px wide, 16 px tall, '.' = transparent. Rendered 2 px per char row via ▀/▄.
+// 40 px wide, 36 px tall, '.' = transparent. Rendered 2 px per char row via ▀/▄.
+// Adapted from a retro pixel-art samurai mask reference (quantized, mirrored, recolored).
 export const MASK = [
-  '....G...............G....',
-  '...GG...............GG...',
-  '...G.......RRR.......G...',
-  '..GG.....RRRRRRR.....GG..',
-  '..G....RRRRRRRRRRR....G..',
-  '..GG..RRRRRRRRRRRRR..GG..',
-  '...GGRRRRRRRRRRRRRRRGG...',
-  '.....RRRrrrrrrrrrRRR.....',
-  '....rrrrrrrrrrrrrrrrr....',
-  '....S.WWW..SSS..WWW.S....',
-  '....SS.....SSS.....SS....',
-  '.....SSSSSSSSSSSSSSS.....',
-  '.....SG.G.G.G.G.G.GS.....',
-  '.....SG.G.G.G.G.G.GS.....',
-  '......SSSSSSSSSSSSS......',
-  '.........sssssss.........',
+  '.......G........................G.......',
+  '.......G........................G.......',
+  '......KG..........KKKK..........GK......',
+  '.....KGGK.......KKGXXGKK.......KGGK.....',
+  '.....DOGG....KKKKKGXXGKKKKK....GGOD.....',
+  '.....SOGGK..KKKKKKGXXGKKKKKK..KGGOS.....',
+  '.....SOGGGGKKKKKKKGXXGKKKKKKKGGGGOS.....',
+  '......KOOGGGKKKKKKXXXXKKKKKKGGGOOK......',
+  '.......OOOOKKKKKKKXXXXKKKKKKKOOOO.......',
+  '........OODKKKKKKXXKKXXKKKKKKDOO........',
+  '.........OKKKKKKGXGGGGXGKKKKKKO.........',
+  '.........KKKKKKGXKKWWKKXGKKKKKK.........',
+  '........KKOOORRXXKOXXOKXXRROOOKK........',
+  '.....KXXGGKKXXXXXXOKKOXXXXXXKKGGXXK.....',
+  '......KXXXOGOOKXXXXKKXXXXKOOGOXXXK......',
+  '.......KKKKKKKGKXXXXXXXXKGKKKKKKK.......',
+  '........XKXKKKXKXXKKKKXXKXKKKXKX........',
+  '.......KXKKKDKKKKKKKKKKKKKKDKKKXK.......',
+  '......KKXKKKKKGGKKKKKKKKGGKKKKKXKK......',
+  '.....SGOXKKSSKKKKKKKKKKKKKKSSKKXOGS.....',
+  '.....GXXKKSKKKKKKKKSSKKKKKKKKSKKXXG.....',
+  '.....GXXKKKSKWWWSKKWWKKSWWWKSKKKXXG.....',
+  '....KOKKXKSKSSWKKSSWWSSKKWSSKSKXKKOK....',
+  '...GRRXKKKKDSSKDSKKSSKKSDKSSDKKKKXRRG...',
+  '..KRRXXKKKKDSDSKWWSKKSWWKSDSDKKKKXXRRK..',
+  '.OGGKXKKKKKKSSKKKKKKKKKKKKSSKKKKKKXKGGO.',
+  '.KOOOGGKKKKXKSKKKKKKKKKKKKSKXKKKKGGOOOK.',
+  '...KOOOKKKKKXKWRKKKKKKKKRWKXKKKKKOOOK...',
+  '.....KOKKKKXKXKKRKRRRRKRKKXKXKKKKOK.....',
+  '.......KKKKSXKSKKKWKKWKKKSKXSKKKK.......',
+  '.............KXSWWWWWWWWSXK.............',
+  '..............XXDSKOOKSDXX..............',
+  '...............KXSXOOXSXK...............',
+  '................KXKOOKXK................',
+  '.................KXXXXK.................',
+  '..................KXXK..................',
 ];
 
 const RESET = '\x1b[0m';

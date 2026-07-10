@@ -5,11 +5,11 @@ import { setTimeout as sleep } from 'node:timers/promises';
 import { MASK, renderMaskRows, showBanner } from '../src/banner.js';
 import { NINJA_FRAMES, renderBar, createStatusBar } from '../src/statusbar.js';
 
-test('mask: every row 25 px, even row count, only palette chars, symmetric', () => {
+test('mask: every row 40 px, even row count, only palette chars, symmetric', () => {
   assert.equal(MASK.length % 2, 0);
   for (const row of MASK) {
-    assert.equal(row.length, 25, row);
-    assert.match(row, /^[.GRrSsW]+$/, row);
+    assert.equal(row.length, 40, row);
+    assert.match(row, /^[.KDSWGORX]+$/, row);
     assert.equal(row, [...row].reverse().join(''), `asymmetric: ${row}`);
   }
 });
@@ -18,7 +18,7 @@ test('renderMaskRows: one char row per two pixel rows, truecolor half-blocks', (
   const rows = renderMaskRows();
   assert.equal(rows.length, MASK.length / 2);
   assert.ok(rows.every((r) => /[▀▄ ]/.test(r)));
-  assert.match(rows[0], /\x1b\[38;2;212;175;55m/, 'horn gold present');
+  assert.match(rows[0], /\x1b\[38;2;230;180;60m/, 'horn gold present');
 });
 
 test('showBanner: writes mask, title, version — no real delays needed', async () => {

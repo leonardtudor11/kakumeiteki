@@ -94,7 +94,7 @@ kakumeiteki/
 }
 ```
 
-`provider`: `ollama` | `openai-compat`. `tier`: `auto` | `micro` | `standard` | `max`. `numCtx: null` = tier default. `permissions`: `safe` | `auto` | `readonly`.
+`provider`: `ollama` | `openai-compat`. `tier`: `auto` | `micro` | `standard` | `max`. `numCtx: null` = tier default. `permissions`: `safe` | `auto` | `readonly`. `mode`: `build` | `refactor` | `audit` | `plan`.
 
 ### Sessions & resume
 
@@ -143,7 +143,8 @@ Auto-detect at session start: query model list, probe one real tool call, cache 
 - Lead with outcome; terse; no filler.
 - No comment noise — code explains itself; constraints only.
 - Security-first: flag issues found in passing even when unasked.
-- Modes: `--mode build | refactor | audit` — same loop, different prompt emphasis (audit = security-review checklist).
+- Modes: `--mode build | refactor | audit | plan` — same loop, different prompt emphasis (audit = security-review checklist; plan = research-first + read-only: explore repo, consult doctrine, output options + tradeoffs + recommendation, file mutation disabled).
+- Verbosity is mode-aware, never over-explaining: `auto` permissions → act, then terse outcome; interactive `safe` → one-line why, then act; `plan` → the reasoning IS the deliverable. After every completed task: a brief self-audit block — findings, risks, what to consider next — a few lines, on point. Doctrine-backed claims cite their source rule (RAG-backed education, not generated vibes).
 
 ## Security (both directions)
 

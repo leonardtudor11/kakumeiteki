@@ -121,6 +121,12 @@ test('invalid enum value → hard error', () => {
   );
 });
 
+test('mode enum accepts all four modes', () => {
+  for (const mode of ['build', 'refactor', 'audit', 'plan']) {
+    assert.equal(loadConfig({ cliFlags: { mode } }).mode, mode);
+  }
+});
+
 test('numCtx: null ok, positive integer ok, junk rejected', () => {
   assert.equal(loadConfig({}).numCtx, null);
   assert.equal(loadConfig({ cliFlags: { numCtx: 8192 } }).numCtx, 8192);

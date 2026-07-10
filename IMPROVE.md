@@ -71,11 +71,31 @@ then implement):
   index discipline, when a queue beats a cron, when NOT to microservice.
 - `rag.md` — chunking, embeddings, retrieval eval, groundedness/citation checks,
   prompt-injection defenses for retrieved text.
-Behavior rule that binds them (goes in prompt.js spec, Phase 3): **do, then talk** —
-implement the working default, then explain the choice, the alternatives, and when to
-switch. Agent educates while shipping, never lectures instead of shipping. Playbooks
-are read-on-demand via the skills registry (micro tier: registry line only, load one
-playbook max per task — context budget rules still win).
+- `secrets-ops.md` — secret storage ladder (env file → Doppler/1Password CLI → Vault /
+  cloud-native manager), **key rotation automated from day one** (dual-key overlap
+  pattern: issue new, deploy, verify, revoke old — via provider APIs + scheduled job),
+  git-leak prevention (gitleaks/trufflehog in CI + pre-commit), never log secrets.
+  Sources: OWASP Secrets Management Cheat Sheet, NIST SP 800-57.
+- `observability.md` — structured logs, metrics, traces, OpenTelemetry as the standard;
+  landscape by scale: solo (PM2 logs + healthchecks.io/UptimeRobot) → Sentry errors →
+  Prometheus/Grafana/Loki → full OTel; alert on symptoms not causes; SLO basics.
+  Sources: Google SRE book, OTel docs.
+- `operations.md` — runbooks, deploy/rollback (zero-downtime, migration discipline),
+  backups + TESTED restores, incident basics, operational audit trails (who did what);
+  orchestration ladder: cron → queue (BullMQ) → workflow engine (Temporal) → k8s, and
+  when each is overkill — right-sized for solo founder up.
+- extend `security.md` — safe-coding layer: input validation at trust boundaries,
+  parameterized queries, output encoding, dependency hygiene (lockfiles, audit,
+  minimal deps), security headers/CSP, least privilege. Sources: OWASP ASVS + Top 10.
+
+Behavior rule that binds them (prompt.js spec, Phase 3, mirrors PLAN behavior spec):
+mode-aware verbosity, never over-explain — `auto`: act, terse outcome; `safe`: one-line
+why, then act; `plan` mode: research first (repo + doctrine/RAG retrieval), present
+options + tradeoffs + recommendation, no edits. Every finished task ends with a brief
+self-audit: findings, risks, what to consider — a few lines, never a lecture. Educating
+= citing the exact doctrine rule, not generating vibes. Playbooks are read-on-demand via
+the skills registry (micro tier: registry line only, one playbook max per task — context
+budget rules still win).
 
 **Stage 2 — lessons capture (built into v1, this is the real self-learning).**
 After any bug that took >2 attempts, any architecture decision, any security fix, the

@@ -18,7 +18,7 @@ export const DEFAULTS = {
 const ENUMS = {
   provider: ['ollama', 'openai-compat'],
   tier: ['auto', 'micro', 'standard', 'max'],
-  mode: ['build', 'refactor', 'audit'],
+  mode: ['build', 'refactor', 'audit', 'plan'],
   permissions: ['safe', 'auto', 'readonly'],
 };
 

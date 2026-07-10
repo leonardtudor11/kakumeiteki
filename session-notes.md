@@ -164,3 +164,5 @@ Commits `ed0620d..5a2b52f` (6). Suite: **268 tests, 267 pass, 1 skip, 0 fail** (
 6/6 fresh live runs pass on qwen3.5:4b (32–56s, clean grep→answer); 2/6 rescued by empty-reply nudge. A/B's 0/2 at n=2 was noise around that wobble, not lever damage. Levers stay. Eval runner now keeps failed runs' transcripts (`5a2b52f`) so the next anomaly is replayable — n per cell should rise when scorecard runs matter (measurement track).
 
 **Next**: Phase 2 of the stronger+safe plan — safety net (pre-edit backups + `kaku undo` first step), drip execution, awaiting go.
+
+**Post-refactor live drive found a shipped v1.1 bug (`b46fbde`)**: interactive `exit`/Ctrl-C left a zombie kaku — stdin never paused, event loop never drained; offline suite was green throughout. Fixed (input.pause() in cleanup), regression-tested with the first mock-TTY tests of the editor loop (test/tui-editor.test.js, 271 tests now), and live-verified via expect-driven pty (clean EOF, exit 0). Owner: if you had lingering kaku processes after quitting, this was why — `ps aux | grep kaku` and kill any strays once.

@@ -54,6 +54,29 @@ Research-verify every rule in skills/*.md against primary sources: OWASP ASVS + 
 codebase-archaeology practice (reverse-engineering.md). Each rule gets a source line;
 any rule that can't be backed gets deleted. Doctrine becomes checkable text, not vibes.
 
+**Stage 1b — domain playbooks (owner-requested 2026-07-10).** The use cases real apps
+need, each as a doctrine file with cited best practice + decision guide ("consult and
+educate": lay out the mainstream options, tradeoffs, and a default recommendation —
+then implement):
+- `auth.md` — session vs JWT, password hashing (argon2/bcrypt), OAuth2/OIDC flows
+  (authorization-code + PKCE, never implicit), token storage, CSRF. Sources: OWASP
+  ASVS/Cheat Sheets, RFC 6749/6750, oauth.net BCPs.
+- `payments.md` — Stripe-style integration: cents-only amounts, webhook signature
+  verification, idempotency keys, test cards, never store PANs (SAQ-A posture),
+  reconcile via events not redirects.
+- `resilience.md` — graceful fallback/degradation: timeouts everywhere, retry with
+  backoff + jitter, circuit breaker, health checks, queue-and-drain, user-visible
+  degraded mode over hard failure.
+- `scalability.md` — stateless services, horizontal scale, cache layers, N+1 and
+  index discipline, when a queue beats a cron, when NOT to microservice.
+- `rag.md` — chunking, embeddings, retrieval eval, groundedness/citation checks,
+  prompt-injection defenses for retrieved text.
+Behavior rule that binds them (goes in prompt.js spec, Phase 3): **do, then talk** —
+implement the working default, then explain the choice, the alternatives, and when to
+switch. Agent educates while shipping, never lectures instead of shipping. Playbooks
+are read-on-demand via the skills registry (micro tier: registry line only, load one
+playbook max per task — context budget rules still win).
+
 **Stage 2 — lessons capture (built into v1, this is the real self-learning).**
 After any bug that took >2 attempts, any architecture decision, any security fix, the
 agent appends a structured lesson to lessons/: situation → wrong assumption → correct

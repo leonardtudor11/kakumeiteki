@@ -6,7 +6,7 @@ import * as readline from 'node:readline/promises';
 import { loadConfig, defaultPaths } from './config.js';
 import { EndpointError } from './provider.js';
 import { createAgent } from './agent.js';
-import { createDeltaRenderer } from './ui.js';
+import { runTurn } from './ui.js';
 import { runDoctor } from './doctor.js';
 import { showBanner, showWelcome } from './banner.js';
 import { runReplInteractive } from './tui.js';
@@ -121,13 +121,8 @@ export async function main(argv = process.argv.slice(2), { cwd = process.cwd() }
 }
 
 async function runOnce(agent, task) {
-  const renderer = createDeltaRenderer((s) => process.stdout.write(s));
-  const res = await agent.run(task, { onDelta: (t) => renderer.push(t) });
-  renderer.flush();
-  process.stdout.write('\n');
-  if (res.status === 'done') return 0;
-  console.error(`[${res.status}]${res.error ? ` ${res.error}` : ''}`);
-  return 1;
+  const res = await runTurn(agent, task, { output: process.stdout, errput: process.stderr });
+  return res.status === 'done' ? 0 : 1;
 }
 
 // Interactive terminals get the rich editor (src/tui.js); pipes/tests get the plain
@@ -192,21 +187,8 @@ async function runReplPlain(agent, {
       if (task === 'exit' || task === 'quit') break;
 
       abort = new AbortController();
-      const renderer = createDeltaRenderer((s) => output.write(s));
-      let res;
-      try {
-        res = await agent.run(task, { signal: abort.signal, onDelta: (t) => renderer.push(t) });
-      } catch (err) {
-        res = { status: 'error', error: err.message };
-      }
+      await runTurn(agent, task, { output, errput, signal: abort.signal });
       abort = null;
-      renderer.flush();
-      output.write('\n');
-      if (res.status === 'error') {
-        errput.write(`[error] ${res.error}\nsession saved at ${agent.session.path} — resume with --continue\n`);
-      } else if (res.status !== 'done') {
-        errput.write(`[${res.status}]${res.error ? ` ${res.error}` : ''}\n`);
-      }
     }
   } finally {
     process.removeListener('SIGINT', onInterrupt);

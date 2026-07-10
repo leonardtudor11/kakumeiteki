@@ -12,7 +12,7 @@ import * as readline from 'node:readline';
 import { homedir } from 'node:os';
 import { renderStatusBar, tildeCwd, modeMeta, RESET, DIM, YELLOW } from './statusbar.js';
 import { countMessages } from './context.js';
-import { createDeltaRenderer } from './ui.js';
+import { runTurn } from './ui.js';
 
 const MODE_ORDER = ['build', 'refactor', 'audit', 'plan'];
 const isWord = (c) => /\w/.test(c);
@@ -152,18 +152,8 @@ export async function runReplInteractive(agent, {
 
       busy = true; abort = new AbortController();
       printStatic(`${DIM}❯${RESET} ${t}`);
-      const renderer = createDeltaRenderer((s) => output.write(s));
-      let res;
-      try {
-        res = await agent.run(t, { signal: abort.signal, onDelta: (x) => renderer.push(x) });
-      } catch (err) {
-        res = { status: 'error', error: err.message };
-      }
-      renderer.flush();
-      output.write('\n');
+      await runTurn(agent, t, { output, errput, signal: abort.signal });
       busy = false; abort = null;
-      if (res.status === 'error') errput.write(`[error] ${res.error}\nsession saved at ${agent.session.path} — resume with --continue\n`);
-      else if (res.status !== 'done') errput.write(`[${res.status}]${res.error ? ` ${res.error}` : ''}\n`);
     }
   } finally {
     input.removeListener('keypress', onKey);

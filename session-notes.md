@@ -77,4 +77,12 @@ Built: `src/context.js` (conservative token estimator chars/3.5, budget 80% thre
 
 Design: compaction is deterministic (no LLM call → no hallucinated summary); system prompt regenerated on resume (not replayed) so changed tier/mode takes effect.
 
-**Next: Phase 5** — security hardening adversarial suite: D1–D14 + S1–S12 + R1–R8 + secret-globs, 100% attacks blocked AND 100% controls allowed via `node --test`. Note: D1–D14 + S1–S12 already built & tested in Phase 2; Phase 5 adds R1–R8 redaction (regexes + redact-before-persist in session.js + tool output) and consolidates the full adversarial suite. Est 1.5h.
+## 2026-07-10 — Phase 5 complete (steps 1–3)
+
+Commits `c54be1c..f955c32`. Suite: **176 offline pass / 0 fail + 1 live**.
+
+Built: `src/redact.js` (R1–R8 regexes + `redact()`/`redactDeep()`, PEM/specific before generic R8). Wired redaction into `loop.js` (tool output before it reaches model messages OR transcript) and `session.js` append (every persisted line via redactDeep — catches assistant text + user-pasted secrets; critical because resume replays transcript to the model). `test/gate-phase5.test.js` = consolidated proof: 100% attacks blocked + 100% controls allowed across D1–D14 (23 attacks), S1–S12, R1–R8, secret-globs.
+
+Security posture now complete across both directions: realpath jail + deny-list classifier + minimal-env bash (Phase 2) + secret redaction never persisting/recirculating (Phase 5). Honest limit still stated in-code: deny-list is a tripwire, jail + default-ask + minimal-env + redaction are the real guarantees.
+
+**Next: Phase 6** — eval suite (10 verifiable tasks) + scorecard runner. Gate: runner completes all 10 tasks twice without crashing; scorecard.md has pass/fail + turns + tokens + seconds per task; every pass-check is a script (no judgment calls). This is how qwen3.5:4b vs qwen2.5-coder:3b gets judged objectively. Needs live model — will warn on RAM. Est 2h.

@@ -33,6 +33,13 @@ Don't have Ollama? Install it from [ollama.com](https://ollama.com), start the a
 - **REPL** with a pixel samurai banner, a bottom status bar (model · mode · live
   context %), and a ninja that peeks while the agent works.
 - **One-shot mode** (`-p`) for scripts and pipes — plain output, exit code 0/1.
+- **Built-in engineering playbooks**: the agent consults cited decision guides (auth,
+  payments, resilience, scalability, RAG, secrets, observability, operations, security)
+  before designing in those domains — architecture and deploy advice grounded in OWASP,
+  Google SRE, AWS Well-Architected and the RFCs, not vibes. Ask it to *plan* a feature
+  (`--mode plan`) and it reads the relevant playbook first.
+- **File preloading**: name a file in your task and its content rides along — the model
+  skips the read round-trip (secret files always excluded).
 - **Sessions**: every run is an append-only JSONL transcript. `kaku --continue` resumes
   the latest session for the directory; `kaku --resume <id>` picks one. Crash-safe.
 - **Cancel**: Ctrl-C once cancels the turn, twice exits. Always resumable.

@@ -95,3 +95,5 @@ console.log(await runTask(task, { config: {/* see eval/scorecard.js configFor */
 - Ollama `/v1` (OpenAI-compat) endpoint cannot set `num_ctx` per request — that is why
   the provider speaks native `/api/chat`.
 - Changing `num_ctx` between requests forces a model reload — pin one per session.
+- A `user_message` event containing `[context: named files preloaded]` is `src/preload.js`
+  attaching task-named files up front — expected, not a prompt-injection artifact.

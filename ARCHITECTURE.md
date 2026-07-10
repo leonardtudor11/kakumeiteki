@@ -24,7 +24,11 @@ loopback model endpoint.
 | `src/session.js` | append-only JSONL transcript; `rebuildMessages` for resume; `latestSessionFor` / `resolveSessionPath` |
 | `src/redact.js` | R1–R8 secret regexes; `redact` / `redactDeep`, replacement `[REDACTED:R#]` |
 | `src/permissions.js` | `createJail` (realpath path jail), `isSecretPath` deny-globs, `splitSegments` + `classifyCommand` + `actionForCommand` (bash policy) |
-| `src/tools/` | `read write edit ls glob grep bash` + `index.js` registry; `walk.js` shared traversal |
+| `src/preload.js` | speed lever: task names an in-jail file → its content (redacted, capped) rides the first user message, skipping the read turn |
+| `src/doctor.js` | `kaku doctor` — Node/Ollama/model checks with exact fix commands |
+| `src/banner.js` / `src/statusbar.js` | terminal chrome: pixel banner, DECSTBM status bar + busy indicator (TTY-only) |
+| `src/tools/` | `read write edit ls glob grep bash skill` + `index.js` registry; `walk.js` shared traversal |
+| `skills/` | doctrine playbooks (auth, payments, resilience, scalability, rag, secrets-ops, observability, operations, security…) served read-only by the `skill` tool |
 | `eval/` | 10 script-checked tasks + `run.js` harness + `scorecard.js` full-matrix runner |
 
 ## Data flow
@@ -58,6 +62,8 @@ Statuses `runTurn` can return: `done`, `protocol_failed`, `doom_loop`, `cancelle
 
 - **Tool shape**: `{ name, schema, run(args, {signal}) → string }`. Registry in
   `src/tools/index.js` maps name → tool; the loop knows nothing about individual tools.
+  The `skill` tool is the one deliberate read outside the jail: a fixed, shipped
+  `skills/` dir, basename-whitelisted, read-only.
 - **Provider shape**: `{ name, preflight(), chat({messages, tools, signal, onDelta}) → {role, content, toolCalls} }`.
   The loop never touches HTTP.
 - **Message array is the only model-facing state.** The session JSONL is the only
@@ -93,7 +99,9 @@ numbered laws and native tool calls. `tier: "auto"` currently resolves to micro
   `config.provider` (the `openai-compat` branch is reserved for this).
 - **New mode**: add an entry to `MODE_EMPHASIS` in `src/prompt.js` and to the `mode`
   enum in `src/config.js`. Audit and plan modes must keep forbidding edits.
-- **Doctrine / skills / lessons**: planned knowledge layer — see IMPROVE.md §5.
+- **New playbook**: drop a cited `skills/<name>.md` (defaults + tradeoffs + hard rules +
+  `## Sources`) — the `skill` tool picks it up automatically; the lint test in
+  `test/skill-tool.test.js` enforces the shape. Lessons capture is IMPROVE.md §5 Stage 2.
 
 ## Invariants a change must not break
 

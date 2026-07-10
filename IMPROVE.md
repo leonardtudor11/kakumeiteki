@@ -58,6 +58,7 @@ any rule that can't be backed gets deleted. Doctrine becomes checkable text, not
 need, each as a doctrine file with cited best practice + decision guide ("consult and
 educate": lay out the mainstream options, tradeoffs, and a default recommendation —
 then implement):
+- **[DONE v1.0 2026-07-10 — all nine playbooks shipped in skills/, served by the built-in `skill` tool, lint-tested, live-verified on qwen3.5:4b]**
 - `auth.md` — session vs JWT, password hashing (argon2/bcrypt), OAuth2/OIDC flows
   (authorization-code + PKCE, never implicit), token storage, CSRF. Sources: OWASP
   ASVS/Cheat Sheets, RFC 6749/6750, oauth.net BCPs.
@@ -126,14 +127,14 @@ Distinct from the knowledge layer above: RAG improves *correctness*, NOT speed o
 tasks. Measured baseline: qwen3.5:4b took 8 turns / 7 tool calls / 163s for a one-word edit
 on M1 8GB (~20s/turn = cold load + full-history reprocess + decode). Levers, ranked ROI:
 
-1. **Pre-load named files (★★★, do early).** If the task names files that exist in-repo,
+1. **[DONE v1.0] Pre-load named files (★★★).** If the task names files that exist in-repo,
    attach their contents (jail-read, size-capped) to the FIRST user message so the model
    skips the separate read turn(s). Biggest single turn-count win. Guard: only files under
    a size cap, only when the name resolves in-jail, never secret-glob files.
-2. **Few-shot the read→edit→done flow in the prompt (★★★).** Small models imitate examples
+2. **[DONE v1.0] Few-shot the read→edit→done flow in the prompt (★★★).** Small models imitate examples
    far better than they parse rules. One worked example of the exact tool sequence cuts
    fumbling and premature/again reads. Keep it inside the micro token budget.
-3. **Explicit early-stop (★★).** "Once the edit is applied AND you have verified it, stop —
+3. **[DONE v1.0] Explicit early-stop (★★).** "Once the edit is applied AND you have verified it, stop —
    do not re-read or re-confirm." The 8-turn run trailed past done.
 4. **Runtime: keep model warm + MLX + quantized KV + tight num_ctx (★★★ — MEASURED, promoted).**
    Phase 6 eval revealed this is the single biggest speed lever on 8GB, not a minor one:

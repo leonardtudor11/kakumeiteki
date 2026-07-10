@@ -99,3 +99,16 @@ old must appear exactly once in the file.
 - **Design consequence (the real Phase 0 payoff):** neither model can produce a unique exact-match anchor unaided. The harness edit tool must verify `old` uniqueness itself and drive the repair loop with the violation ("occurs 4×, widen the anchor") — already in PLAN.md as the fenced-protocol repair loop; Phase 2/3 must treat uniqueness verification as a hard gate, not an optional nicety. Probe A shows edge-case blindness (boundary hyphens) — success criteria in eval tasks must include boundary cases, never happy-path only.
 
 Run conditions: M1 8 GB, Ollama, one model resident at a time, 2026-07-10.
+
+---
+
+## Addendum 2026-07-10 pm — landscape refresh (web research)
+
+Phase 0 was a 2-model convenience bake-off, not a survey. Refreshed the field via web search (my training cutoff Jan 2026 was ~6 months stale). Findings:
+
+- **New default candidate: `qwen3.5:4b`** (~2.5 GB Q4) — newer than qwen2.5-coder:3b, reported stronger instruction-following + tool-calling (Unsloth chat-template fixes), fits 8 GB comfortably. Adopted as config default; qwen2.5-coder:3b retained as fallback.
+- **Gemma 4 rejected**: fails tool-calls / agentic work per HN + r/LocalLLaMA — disqualifying for a tool-driven harness.
+- **Qwen3.6 (27B/35B-A3B)** is the mid-2026 coding leader but too big for 8 GB.
+- **Ollama now MLX-backed on Apple Silicon** (official preview): +15–30% throughput, −10% memory. Update Ollama.
+- The Phase 0 binding lessons (edit-anchor uniqueness must be harness-enforced; eval criteria must include boundary cases) are model-independent and still hold — they are why the harness works regardless of which small model wins.
+- **Final pick deferred to the Phase 6 eval scorecard**: qwen3.5:4b vs qwen2.5-coder:3b on real tasks, not vibes. Harness is model-agnostic (config `model`), so no lock-in.

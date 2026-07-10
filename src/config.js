@@ -5,7 +5,7 @@ import { join } from 'node:path';
 export const DEFAULTS = {
   provider: 'ollama',
   baseUrl: 'http://127.0.0.1:11434',
-  model: 'qwen2.5-coder:3b',
+  model: 'qwen3.5:4b',
   tier: 'auto',
   numCtx: null,
   mode: 'build',

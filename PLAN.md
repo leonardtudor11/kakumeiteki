@@ -258,12 +258,19 @@ ollama pull qwen2.5-coder:3b        # 1.9 GB (verified) — best coding model th
 ```
 Then the 3 probe prompts above (supplied at execution). Rollback: `ollama rm`.
 
-Model guidance by RAM (reference, not commitment):
+Model guidance by RAM (reference, not commitment — refreshed 2026-07-10 via web research):
 | RAM | Daily driver | Stretch |
 |---|---|---|
-| 8 GB (now) | qwen2.5-coder:3b / qwen3:4b | 7B q4 (4.7 GB) — works, swaps, close other apps |
-| 16 GB | qwen2.5-coder:7b | 14B q4 |
-| 32 GB+ | qwen3-coder 30B-A3B MoE class | 32B dense |
+| 8 GB (now) | **qwen3.5:4b** (~2.5 GB Q4) — newer, better instruction-following + tool-calling than qwen2.5-coder:3b at similar footprint; 2.5-coder:3b kept as fallback | qwen2.5-coder:7b (4.7 GB Q4) — works, swaps, close other apps |
+| 16 GB | qwen2.5-coder:7b / qwen3.5:8b | 14B q4 |
+| 32 GB+ | qwen3-coder 30B-A3B MoE / Qwen3.6-27B dense | 32B dense |
+
+Research notes (2026-07-10, sources current):
+- **Gemma 4 rejected for this agent**: strong general model but reported to fail tool-calls / agentic work (HN, r/LocalLLaMA) — disqualifying since the whole harness is tool-call driven.
+- **Qwen3.6 (27B/35B-A3B) is the mid-2026 coding leader but too big for 8 GB** — the fitting frontier-of-small is qwen3.5:4b.
+- **Ollama now runs on Apple's MLX backend** (official preview): ~15–30% more throughput, ~10% less memory on Apple Silicon. Update Ollama regardless of model choice — free win on the 8 GB budget.
+- Quant: Q4_K_M default fine for 3–4B; Q5_K_M optional small quality bump, still fits; Q6+ tight once KV grows. num_ctx: 8k safe, 16k feasible with q8 KV-cache quant, 32k risky on 8 GB.
+- **Final pick deferred to the Phase 6 eval scorecard** — qwen3.5:4b (default) vs qwen2.5-coder:3b (fallback) judged on real tasks, not vibes. The harness is model-agnostic (swap via config `model`), so this is not a lock-in.
 
 ## Eval tasks (Phase 6)
 

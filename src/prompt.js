@@ -37,11 +37,11 @@ ${toolList}
 
 To call a tool, reply with ONE fenced block and nothing else. A typical edit task is exactly this sequence, one block per message:
 \`\`\`tool
-{"name": "read", "args": {"path": "src/app.js"}}
+{"name": "read", "args": {"path": "app.js"}}
 \`\`\`
 then, after the result:
 \`\`\`tool
-{"name": "edit", "args": {"path": "src/app.js", "old": "exact text copied from the file", "new": "replacement"}}
+{"name": "edit", "args": {"path": "app.js", "old": "exact text copied from the file", "new": "replacement"}}
 \`\`\`
 then plain text: the one-line result.
 If a file's content is already provided in the task, skip the read and edit directly.

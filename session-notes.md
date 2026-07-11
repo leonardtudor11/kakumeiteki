@@ -177,3 +177,12 @@ Commits `8b51c60`, `0110553`, `383dc28`, `0374c14`. Suite grew 279→299 (298 pa
 4. **Audit log** (`0374c14`): `<sessionDir>/audit.jsonl` — file outcomes, non-read-only bash, scope grants, undo restores. Redacted, paths only, best-effort (warns once, never breaks a turn). Live-verified applied→restored trail.
 
 Machine-assistant tools (Track 2) now unblocked — every prereq from RESUME §B.1 shipped.
+
+## 2026-07-11 (later) — Tracks "measurement" + "machine-assistant" landed
+
+Commits `5958d92..3cd489d`. Suite 302→318 (317 pass, 1 skip). Everything A/B-measured per ethos.
+
+- **Eval**: 3 new task classes (11-dedup / 12-junk / 13-clean), both-directions check proofs, `TASK_FILTER` subset runs, baseline recorded BEFORE tools existed.
+- **Tools**: `dedup` (SHA-256 groups), `junkscan` (conservative rules, recursive), `trash` (undo-store-backed deletion, batch-validated, gated+audited).
+- **Measured**: 3.5:4b machine-assistant subset 4/6→9/9 (and 2–3.6× faster); coder:3b 0/6→7/8. Both models chose `trash` over `rm` unprompted — deletions undoable by default.
+- **Live-measured tool-bug lessons** (fixed + regression-tested): silent-empty on missing dir = falsehood amplifier (dedup + glob); `""` optional params from small models; "measure the tool the day you ship it" now doctrine.

@@ -186,3 +186,14 @@ Commits `5958d92..3cd489d`. Suite 302→318 (317 pass, 1 skip). Everything A/B-m
 - **Tools**: `dedup` (SHA-256 groups), `junkscan` (conservative rules, recursive), `trash` (undo-store-backed deletion, batch-validated, gated+audited).
 - **Measured**: 3.5:4b machine-assistant subset 4/6→9/9 (and 2–3.6× faster); coder:3b 0/6→7/8. Both models chose `trash` over `rm` unprompted — deletions undoable by default.
 - **Live-measured tool-bug lessons** (fixed + regression-tested): silent-empty on missing dir = falsehood amplifier (dedup + glob); `""` optional params from small models; "measure the tool the day you ship it" now doctrine.
+
+## 2026-07-11 (close) — rename tool + parser fix + full-matrix gate
+
+Commits `d2cda48`, `830fa7e`. Suite **323 / 322 pass / 1 skip**. Wiki updated (3 lessons: zombie-exit pty drive · small-model tool ergonomics · baseline-before-tool A/B).
+
+- **rename tool**: 3.5:4b 0/2→3/3 on the measured-dead class (231s→63s); coder:3b honest 0/3 (never discovers it — recorded, not spun). Parser fix from same transcripts: unterminated ```json fence with a valid call no longer dies silently.
+- **Full-matrix gate**: 3.5:4b **22/26** (classic-10: 16/20, +3, no confirmed regressions; tool wins hold). coder:3b **13/26** (machine-assistant 6/6!).
+- **Timing columns invalid** — 7h overnight run, machine slept; re-time under `caffeinate` before quoting speeds.
+- **Open flags (n=2, replay before believing)**: 04-add-function 1/2→0/2 (both turn-capped) · coder:3b classic-10 drift 10/20→7/20. Shared suspect: 12-tool registry crowding small-model attention. 17 kept failure transcripts on disk for triage.
+
+**Next session start here**: (1) triage 04 + coder drift from kept transcripts — if tool-list crowding confirmed, candidate fix = tier-aware tool registry (micro tier gets a trimmed list); (2) caffeinate re-time; (3) then Track 4 (openai-compat + capability ladder) / verified-confidence line / PDF guide (§C still owed). RESUME.md itself now stale — owner call pending on session-notes tracking mismatch.

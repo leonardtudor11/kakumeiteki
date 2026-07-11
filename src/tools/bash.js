@@ -44,13 +44,18 @@ export function createBashTool({ jail, config, confirm, audit }) {
   };
 }
 
-function execute(command, { cwd, timeoutMs, maxOutputBytes, signal }) {
+function execute(command, { cwd, timeoutMs, maxOutputBytes, signal, platform = process.platform }) {
+  const win = platform === 'win32';
   return new Promise((resolvePromise, rejectPromise) => {
-    const child = spawn('/bin/bash', ['-c', command], {
+    // PowerShell, not cmd.exe: it aliases ls/cat/rm/cp/mv/pwd, so the POSIX-shaped
+    // commands a model emits mostly work as-is. -NoProfile keeps the user's profile
+    // (and its aliases) out of the sandbox.
+    const { file, args } = shellInvocation(platform, command);
+    const child = spawn(file, args, {
       cwd,
-      detached: true,
-      env: minimalEnv(),
+      env: minimalEnv(platform),
       stdio: ['ignore', 'pipe', 'pipe'],
+      ...(win ? { windowsHide: true } : { detached: true }),
     });
 
     const chunks = [];
@@ -60,6 +65,14 @@ function execute(command, { cwd, timeoutMs, maxOutputBytes, signal }) {
     let aborted = false;
 
     const killGroup = () => {
+      if (win) {
+        // no process groups on Windows: taskkill /T walks the child tree, /F is SIGKILL.
+        // A shell that spawned node would otherwise survive the kill and keep the pipe open.
+        try {
+          spawn('taskkill', ['/pid', String(child.pid), '/T', '/F'], { stdio: 'ignore', windowsHide: true });
+        } catch {}
+        return;
+      }
       try {
         process.kill(-child.pid, 'SIGTERM');
       } catch {}
@@ -118,7 +131,22 @@ function execute(command, { cwd, timeoutMs, maxOutputBytes, signal }) {
   });
 }
 
-function minimalEnv() {
-  const keep = ['PATH', 'HOME', 'LANG', 'LC_ALL', 'TERM', 'TMPDIR'];
+// PowerShell, not cmd.exe: it aliases ls/cat/rm/cp/mv/pwd, so the POSIX-shaped commands
+// a small model emits mostly work as-is. -NoProfile keeps the user's own profile and
+// aliases out of the sandbox.
+export function shellInvocation(platform, command) {
+  return platform === 'win32'
+    ? { file: 'powershell.exe', args: ['-NoProfile', '-NonInteractive', '-Command', command] }
+    : { file: '/bin/bash', args: ['-c', command] };
+}
+
+// Parent secrets stay out of the child. On Windows the shell itself will not start
+// without SystemRoot/COMSPEC, and npm/node need PATHEXT + the AppData pair — so the
+// minimal set is genuinely different, not just PATH with another name.
+export function minimalEnv(platform = process.platform) {
+  const keep =
+    platform === 'win32'
+      ? ['Path', 'PATH', 'PATHEXT', 'SystemRoot', 'SystemDrive', 'COMSPEC', 'TEMP', 'TMP', 'USERPROFILE', 'APPDATA', 'LOCALAPPDATA', 'PROGRAMFILES', 'PROGRAMDATA']
+      : ['PATH', 'HOME', 'LANG', 'LC_ALL', 'TERM', 'TMPDIR'];
   return Object.fromEntries(keep.map((k) => [k, process.env[k]]).filter(([, v]) => v !== undefined));
 }

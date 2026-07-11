@@ -23,7 +23,7 @@ loopback model endpoint.
 | `src/context.js` | client-side token estimate (`chars/3.5`, over-counts), `budgetFor`, `needsCompaction`, deterministic `compact` |
 | `src/session.js` | append-only JSONL transcript; `rebuildMessages` for resume; `latestSessionFor` / `resolveSessionPath` |
 | `src/redact.js` | R1–R8 secret regexes; `redact` / `redactDeep`, replacement `[REDACTED:R#]` |
-| `src/permissions.js` | `createJail` (realpath path jail), `isSecretPath` deny-globs, `splitSegments` + `classifyCommand` + `actionForCommand` (bash policy) |
+| `src/permissions.js` | `createJail` (realpath path jail), `isSecretPath` deny-globs, `splitSegments` + `classifyCommand` + `actionForCommand` (bash policy). Platform-aware: on `win32` the jail folds case (NTFS is case-insensitive), backslash parses as a path separator instead of a POSIX escape, and the PowerShell deny-list W1–W16 rides on top of D1–D14 |
 | `src/preload.js` | speed lever: task names an in-jail file → its content (redacted, capped) rides the first user message, skipping the read turn |
 | `src/doctor.js` | `kaku doctor` — Node/Ollama/model checks with exact fix commands |
 | `src/undo.js` | pre-mutation backups (blob + manifest per session) + the undo stack behind `kaku undo` |

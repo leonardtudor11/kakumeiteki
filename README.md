@@ -29,6 +29,18 @@ kaku -p "in greet.js rename the greet function to hello" # single-file edits wor
 Don't have Ollama? Install it from [ollama.com](https://ollama.com), start the app
 (or `ollama serve`), and re-run `kaku doctor` — it walks you through every missing piece.
 
+Non-technical friend on a Mac or a Windows PC? Hand them
+[docs/install-guide.pdf](docs/install-guide.pdf) — click-by-click, screenshots, English
+and Romanian.
+
+## Platforms
+
+| Platform | Status |
+|---|---|
+| macOS (Apple Silicon) | **Developed and measured here.** Every eval number in this repo comes from an M1/8 GB. |
+| Windows 10/11 | **Implemented, unit-tested, not yet run end-to-end on real hardware.** The bash tool runs PowerShell (`-NoProfile`), the process-tree kill uses `taskkill /T /F`, the jail folds case (NTFS is case-insensitive), and the command classifier knows the PowerShell spellings of the dangerous things — `Remove-Item -Recurse -Force`, `iwr｜iex`, `Start-Process -Verb RunAs`, `schtasks /create`, `vssadmin delete shadows`, `Set-ExecutionPolicy`, registry run-keys — blocked in every permissions mode (`test/windows.test.js`). Nobody has driven it on a real Windows box yet; first report wins. |
+| Linux | Should work (same POSIX path as macOS); untested. |
+
 ## What you get
 
 - **REPL** with a pixel samurai banner, a bottom status bar (model · mode · live
@@ -121,8 +133,11 @@ in `eval/scorecard.md`. `TASK_FILTER=11,12 node eval/scorecard.js` re-measures a
   only with explicit consent: `/` is never allowed, and the home root or anything
   outside it demands an interactive yes on top of the flag.
 - Bash commands are **classified** (deny / network / read-only / mutate); anything not
-  provably read-only asks first in `safe` mode. The deny-list (D1–D14) is a tripwire,
-  not a sandbox — the jail, default-ask and cwd-pinning are the real guarantees.
+  provably read-only asks first in `safe` mode. The deny-list (D1–D14 on POSIX, W1–W16
+  for PowerShell on Windows) is a tripwire, not a sandbox — the jail, default-ask and
+  cwd-pinning are the real guarantees. The classifier is platform-aware: on Windows,
+  backslash is parsed as a path separator rather than a POSIX escape, because
+  `C:\Windows` silently becoming `C:Windows` made every path rule downstream fail open.
 - File edits/writes go through the **same permission gate**: `readonly` blocks them,
   `safe` shows a diff preview and asks, and every applied change is backed by
   `kaku undo`.

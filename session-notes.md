@@ -239,3 +239,26 @@ ladder stays queued as local work.
 
 **Next per owner order**: capability ladder (local quantized models scorecard) → PDF
 install guide (§C, still owed). Cloud adapter parked until owner asks.
+
+## 2026-07-11 (later) — thorough-check sweep + full-matrix gate 24/26 + runner bug fixed
+
+Owner asked for a functional sweep of untouched areas before the ladder. Findings:
+
+- Drills all green: doctor · TTY exit via pty (no zombies) · live e2e 1/1 (160s) ·
+  undo byte-identical with y/N · audit applied→restored trail · --scope refusals (/ never,
+  outside-home needs TTY yes, exit 1).
+- **Live one-shot drill caught a real bug the evals missed** (`a976a99`): verify-nudge ×
+  mute-model stacked into empty_answer and THREW AWAY a correct answer. Fixed: pre-nudge
+  answer stashed → returned as done + UNVERIFIED label (verify_fallback event); nudge text
+  offers the no-check-exists out; all terminal statuses now carry `verification`.
+- **Full-matrix gate (clean timing, caffeinate): 3.5:4b 24/26 avg 123.6s · coder:3b 14/26
+  avg 28.3s.** 04 2/2 in-gate; 09 the honest 0/2 ceiling both models; verify-nudge zero
+  regression at gate scale; coder:3b first-ever rename pass (1/2, n=2, don't oversell).
+- **Runner bug found + fixed**: full runs OVERWROTE scorecard.md wholesale — 185 lines of
+  measured history clobbered (recovered from git). scorecard.js now preserves everything
+  below a HISTORY marker (`withPreservedHistory` in eval/run.js, unit-tested).
+- Owner safety brief delivered: jail + safe-mode default + undo + deny-list + redaction +
+  audit + computed verification line; honest limits stated (auto mode, tripwire nature).
+
+Ladder next: qwen3:1.7b (pulled) then pull+run qwen3:4b, via TASK_FILTER-all (no file
+writes) — head table stays the flagship pair; ladder recorded in its own section.

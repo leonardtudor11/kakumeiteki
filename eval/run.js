@@ -79,3 +79,14 @@ export function renderScorecard(results, { model, generatedAt = 'unknown' } = {}
   lines.push('', `**${passed}/${results.length} passed** · avg ${avgSec}s/task`, '');
   return lines.join('\n');
 }
+
+// The head table is "latest full run" and gets replaced; every section below the
+// marker is measured history the runner must never touch. Learned the hard way:
+// a full-matrix run once clobbered 185 lines of recorded baselines and A/Bs.
+export const HISTORY_MARKER = '<!-- HISTORY — measured ground truth below; the runner replaces only the table above this line -->';
+
+export function withPreservedHistory(prior, head) {
+  const idx = (prior ?? '').indexOf(HISTORY_MARKER);
+  const history = idx === -1 ? `${HISTORY_MARKER}\n` : prior.slice(idx);
+  return `${head.trimEnd()}\n\n${history}`;
+}

@@ -97,3 +97,19 @@ test('runSuite + renderScorecard: multi-run table with pass count and per-task r
   assert.match(md, new RegExp(`\\d+/${TASKS.length * 2} passed`));
   assert.match(md, /avg .*s\/task/);
 });
+
+test('withPreservedHistory: history below the marker survives a head rewrite', async () => {
+  const { withPreservedHistory, HISTORY_MARKER } = await import('../eval/run.js');
+  const prior = `old head\n\n${HISTORY_MARKER}\n## precious baseline\nmeasured numbers\n`;
+  const out = withPreservedHistory(prior, 'new head\n');
+  assert.ok(out.startsWith('new head\n'));
+  assert.ok(out.includes(HISTORY_MARKER));
+  assert.ok(out.includes('## precious baseline\nmeasured numbers'));
+  assert.ok(!out.includes('old head'));
+});
+
+test('withPreservedHistory: no marker in prior → fresh marker, nothing lost silently', async () => {
+  const { withPreservedHistory, HISTORY_MARKER } = await import('../eval/run.js');
+  const out = withPreservedHistory('', 'head only');
+  assert.equal(out, `head only\n\n${HISTORY_MARKER}\n`);
+});

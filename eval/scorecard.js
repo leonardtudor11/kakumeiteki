@@ -1,8 +1,8 @@
-import { writeFileSync } from 'node:fs';
+import { writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { runSuite, renderScorecard } from './run.js';
+import { runSuite, renderScorecard, withPreservedHistory } from './run.js';
 import { TASKS } from './tasks/index.js';
 import { createAgent } from '../src/agent.js';
 
@@ -72,5 +72,9 @@ const totals = MODELS.map((m) => {
 lines.push('', '## Totals', '', ...totals.map((t) => `- \`${t.model}\`: ${t.line}`), '');
 
 const comparison = lines.join('\n');
-if (!FILTER) writeFileSync(join(__dir, 'scorecard.md'), comparison);
+if (!FILTER) {
+  const path = join(__dir, 'scorecard.md');
+  const prior = existsSync(path) ? readFileSync(path, 'utf8') : '';
+  writeFileSync(path, withPreservedHistory(prior, comparison));
+}
 process.stderr.write('\n' + comparison + '\n');

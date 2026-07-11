@@ -4,24 +4,41 @@ Models: qwen3.5:4b vs qwen2.5-coder:3b · 2 runs/task
 
 | task | qwen3.5:4b pass | qwen2.5-coder:3b pass | qwen3.5:4b turns | qwen2.5-coder:3b turns | qwen3.5:4b sec | qwen2.5-coder:3b sec |
 |---|---|---|---|---|---|---|
-| 01-hello-tool | 2/2 | 2/2 | 2.5 | 3.5 | 275.6 | 19.4 |
-| 02-read-answer | 2/2 | 1/2 | 1.0 | 3.0 | 482.3 | 18.0 |
-| 03-fix-test | 2/2 | 0/2 | 7.0 | 2.0 | 593.9 | 15.0 |
-| 04-add-function | 0/2 | 0/2 | 12.0 | 5.0 | 4166.3 | 43.5 |
-| 05-rename | 2/2 | 0/2 | 2.5 | 10.0 | 199.2 | 70.0 |
-| 06-find-def | 2/2 | 1/2 | 7.5 | 7.5 | 1367.8 | 58.4 |
-| 07-find-vuln | 2/2 | 2/2 | 1.0 | 2.0 | 854.4 | 23.1 |
-| 08-edit-precision | 2/2 | 1/2 | 3.0 | 7.5 | 643.4 | 31.1 |
-| 09-edit-big-file | 0/2 | 0/2 | 4.5 | 3.0 | 1641.5 | 23.0 |
-| 10-constraint | 2/2 | 0/2 | 3.5 | 6.5 | 1251.9 | 26.2 |
-| 11-dedup-content | 2/2 | 2/2 | 2.5 | 2.0 | 605.7 | 13.7 |
-| 12-junk-detect | 2/2 | 2/2 | 2.5 | 2.0 | 565.3 | 14.8 |
-| 13-clean-junk | 2/2 | 2/2 | 2.5 | 2.0 | 76.2 | 13.3 |
+| 01-hello-tool | 2/2 | 1/2 | 5.0 | 1.5 | 125.3 | 14.4 |
+| 02-read-answer | 2/2 | 1/2 | 1.0 | 2.5 | 27.2 | 16.0 |
+| 03-fix-test | 2/2 | 2/2 | 6.0 | 3.0 | 161.7 | 21.4 |
+| 04-add-function | 2/2 | 0/2 | 7.5 | 5.0 | 213.9 | 59.3 |
+| 05-rename | 2/2 | 1/2 | 2.5 | 3.5 | 65.0 | 44.4 |
+| 06-find-def | 2/2 | 1/2 | 3.0 | 2.0 | 77.8 | 14.5 |
+| 07-find-vuln | 2/2 | 2/2 | 1.0 | 7.5 | 107.2 | 60.3 |
+| 08-edit-precision | 2/2 | 2/2 | 6.5 | 3.0 | 145.3 | 20.2 |
+| 09-edit-big-file | 0/2 | 0/2 | 2.0 | 3.0 | 273.1 | 52.2 |
+| 10-constraint | 2/2 | 0/2 | 7.5 | 3.0 | 162.1 | 20.5 |
+| 11-dedup-content | 2/2 | 1/2 | 2.5 | 2.0 | 76.8 | 13.9 |
+| 12-junk-detect | 2/2 | 1/2 | 2.5 | 2.0 | 87.0 | 16.3 |
+| 13-clean-junk | 2/2 | 2/2 | 3.0 | 2.0 | 84.2 | 14.1 |
 
 ## Totals
 
-- `qwen3.5:4b`: **22/26** (avg 978.7s)
-- `qwen2.5-coder:3b`: **13/26** (avg 28.4s)
+- `qwen3.5:4b`: **24/26** (avg 123.6s)
+- `qwen2.5-coder:3b`: **14/26** (avg 28.3s)
+
+<!-- HISTORY — measured ground truth below; the runner replaces only the table above this line -->
+
+## Full-matrix gate (2026-07-11, post confidence line + ergonomics waves) — CLEAN TIMING
+
+Headline: `qwen3.5:4b` **24/26** (avg 123.6s — first clean full-matrix timing; the old
+978.7s table was sleep-contaminated) · `qwen2.5-coder:3b` **14/26** (avg 28.3s).
+
+- 04-add-function on 3.5:4b: **2/2 IN the full matrix** — the phantom-prefix +
+  ergonomics fixes hold under gate conditions, not just in isolated replays.
+- 09-edit-big-file stays 0/2 on both models — the honest ceiling class, unchanged.
+- coder:3b wobble profile shifted (01/02/05/06/11/12 each 1/2) but total 13→14; its
+  passes concentrate where tools carry the task. 05-rename 1/2 is its first-ever rename
+  pass (was 0/7 lifetime) — the verify/ergonomics waves may have nudged discovery; n=2,
+  do not oversell.
+- Verify-nudge caused NO regression at gate scale; 3.5:4b total rose 22→24.
+
 ## Machine-assistant classes — baseline BEFORE purpose-built tools (2026-07-11)
 
 Tasks 11–13 solved with the generic toolset only (bash/glob/read); the dedup / junk-scan /

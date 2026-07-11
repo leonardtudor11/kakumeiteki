@@ -58,7 +58,7 @@ Don't have Ollama? Install it from [ollama.com](https://ollama.com), start the a
 | `-p "task"` | one-shot task (no REPL) |
 | `--model <name>` | any Ollama model tag |
 | `--mode build\|refactor\|audit\|plan` | audit + plan are read-only by design |
-| `--permissions safe\|auto\|readonly` | `safe` (default) asks before mutations |
+| `--permissions safe\|auto\|readonly` | `safe` (default) previews + asks before any change; `readonly` blocks all changes |
 | `--continue` / `--resume [id]` | resume sessions |
 | `doctor` | setup check |
 | `undo [--yes]` | revert the last file change (repeat to walk back) |
@@ -113,6 +113,9 @@ tasks, pass/fail + turns + seconds, no vibes. Verdicts live in `eval/scorecard.m
 - Bash commands are **classified** (deny / network / read-only / mutate); anything not
   provably read-only asks first in `safe` mode. The deny-list (D1–D14) is a tripwire,
   not a sandbox — the jail, default-ask and cwd-pinning are the real guarantees.
+- File edits/writes go through the **same permission gate**: `readonly` blocks them,
+  `safe` shows a diff preview and asks, and every applied change is backed by
+  `kaku undo`.
 - Secret files (`.env`, keys, `~/.ssh`, …) are refused; secret strings (API keys, JWTs,
   PEM blocks) are **redacted** from everything the model sees or the transcript stores.
 - Zero network from the agent core except your local Ollama endpoint.

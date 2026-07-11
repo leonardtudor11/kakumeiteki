@@ -157,9 +157,10 @@ async function runReplPlain(agent, {
   let exiting = false;
   let lastInterrupt = 0;
 
-  confirmRef.fn = async ({ command, class: cls }) => {
+  confirmRef.fn = async ({ command, class: cls, preview }) => {
+    const prompt = preview ? `\npending change:\n${preview}\n[y/N] ` : `\nallow ${cls} command: ${command}\n[y/N] `;
     const answer = await rl
-      .question(`\nallow ${cls} command: ${command}\n[y/N] `, abort ? { signal: abort.signal } : {})
+      .question(prompt, abort ? { signal: abort.signal } : {})
       .catch(() => 'n');
     return /^y(es)?$/i.test(answer.trim());
   };

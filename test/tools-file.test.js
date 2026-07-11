@@ -6,6 +6,7 @@ import { join } from 'node:path';
 
 import { createJail } from '../src/permissions.js';
 import { createTools } from '../src/tools/index.js';
+import { DEFAULTS } from '../src/config.js';
 
 const PROBE_C_FILE = `export function getData(url) {
   return fetch(url).then(r => r.json());
@@ -26,7 +27,9 @@ function setup() {
   writeFileSync(join(root, '.env.example'), 'API_KEY=fill-me-in');
   writeFileSync(join(root, 'env.js'), 'export const env = process.env;');
   writeFileSync(join(root, 'photo.bin'), Buffer.from([0x89, 0x50, 0x00, 0x47, 0x0d, 0x0a]));
-  const tools = createTools({ jail: createJail(root) });
+  // permissions: auto — these tests exercise tool MECHANICS; the safe/readonly gate
+  // has its own suite (test/file-permissions.test.js)
+  const tools = createTools({ jail: createJail(root), config: { ...DEFAULTS, permissions: 'auto' } });
   return { root, tools, cleanup: () => rmSync(base, { recursive: true, force: true }) };
 }
 
@@ -99,10 +102,10 @@ test('read: giant file truncated with continue hint', () => {
   }
 });
 
-test('write: creates file with parent dirs', () => {
+test('write: creates file with parent dirs', async () => {
   const { root, tools, cleanup } = setup();
   try {
-    const msg = tools.write.run({ path: 'new/deep/mod.js', content: 'export {};\n' });
+    const msg = await tools.write.run({ path: 'new/deep/mod.js', content: 'export {};\n' });
     assert.match(msg, /wrote 11 bytes/);
     assert.equal(readFileSync(join(root, 'new/deep/mod.js'), 'utf8'), 'export {};\n');
   } finally {
@@ -110,31 +113,31 @@ test('write: creates file with parent dirs', () => {
   }
 });
 
-test('write: overwrites existing file', () => {
+test('write: overwrites existing file', async () => {
   const { root, tools, cleanup } = setup();
   try {
-    tools.write.run({ path: 'notes.txt', content: 'replaced' });
+    await tools.write.run({ path: 'notes.txt', content: 'replaced' });
     assert.equal(readFileSync(join(root, 'notes.txt'), 'utf8'), 'replaced');
   } finally {
     cleanup();
   }
 });
 
-test('write: jail escape + secret paths refused', () => {
+test('write: jail escape + secret paths refused', async () => {
   const { tools, cleanup } = setup();
   try {
-    assert.throws(() => tools.write.run({ path: '../evil.js', content: 'x' }), /escapes project root/);
-    assert.throws(() => tools.write.run({ path: '.env.production', content: 'KEY=1' }), /secret/);
-    assert.throws(() => tools.write.run({ path: 'id_rsa', content: 'x' }), /secret/);
+    await assert.rejects(() => tools.write.run({ path: '../evil.js', content: 'x' }), /escapes project root/);
+    await assert.rejects(() => tools.write.run({ path: '.env.production', content: 'KEY=1' }), /secret/);
+    await assert.rejects(() => tools.write.run({ path: 'id_rsa', content: 'x' }), /secret/);
   } finally {
     cleanup();
   }
 });
 
-test('edit: Phase 0 regression — non-unique anchor rejected with repair guidance', () => {
+test('edit: Phase 0 regression — non-unique anchor rejected with repair guidance', async () => {
   const { tools, cleanup } = setup();
   try {
-    assert.throws(
+    await assert.rejects(
       () => tools.edit.run({ path: 'api.js', old: 'getData', new: 'fetchData' }),
       /occurs 4x in api\.js — widen the anchor/,
     );
@@ -143,10 +146,10 @@ test('edit: Phase 0 regression — non-unique anchor rejected with repair guidan
   }
 });
 
-test('edit: unique anchor applies byte-exact (probe C done right)', () => {
+test('edit: unique anchor applies byte-exact (probe C done right)', async () => {
   const { root, tools, cleanup } = setup();
   try {
-    const msg = tools.edit.run({
+    const msg = await tools.edit.run({
       path: 'api.js',
       old: 'export function getData(url)',
       new: 'export function fetchData(url)',
@@ -161,10 +164,10 @@ test('edit: unique anchor applies byte-exact (probe C done right)', () => {
   }
 });
 
-test('edit: old not found → re-read guidance', () => {
+test('edit: old not found → re-read guidance', async () => {
   const { tools, cleanup } = setup();
   try {
-    assert.throws(
+    await assert.rejects(
       () => tools.edit.run({ path: 'api.js', old: 'function getdata(url)', new: 'x' }),
       /not found in api\.js — re-read the file/,
     );
@@ -173,10 +176,10 @@ test('edit: old not found → re-read guidance', () => {
   }
 });
 
-test('edit: replaceAll replaces every occurrence and reports count', () => {
+test('edit: replaceAll replaces every occurrence and reports count', async () => {
   const { root, tools, cleanup } = setup();
   try {
-    const msg = tools.edit.run({ path: 'api.js', old: 'getData', new: 'fetchData', replaceAll: true });
+    const msg = await tools.edit.run({ path: 'api.js', old: 'getData', new: 'fetchData', replaceAll: true });
     assert.equal(msg, 'edited api.js: 4 replacements');
     const after = readFileSync(join(root, 'api.js'), 'utf8');
     assert.equal(after.includes('getData'), false);
@@ -186,24 +189,24 @@ test('edit: replaceAll replaces every occurrence and reports count', () => {
   }
 });
 
-test('edit: dollar signs in replacement stay literal (no regex footgun)', () => {
+test('edit: dollar signs in replacement stay literal (no regex footgun)', async () => {
   const { root, tools, cleanup } = setup();
   try {
     writeFileSync(join(root, 'price.js'), 'const price = PLACEHOLDER;\n');
-    tools.edit.run({ path: 'price.js', old: 'PLACEHOLDER', new: "'$100 & $& more'" });
+    await tools.edit.run({ path: 'price.js', old: 'PLACEHOLDER', new: "'$100 & $& more'" });
     assert.equal(readFileSync(join(root, 'price.js'), 'utf8'), "const price = '$100 & $& more';\n");
   } finally {
     cleanup();
   }
 });
 
-test('edit: identical old/new, empty old, secret path, missing file → clean errors', () => {
+test('edit: identical old/new, empty old, secret path, missing file → clean errors', async () => {
   const { tools, cleanup } = setup();
   try {
-    assert.throws(() => tools.edit.run({ path: 'api.js', old: 'x', new: 'x' }), /identical/);
-    assert.throws(() => tools.edit.run({ path: 'api.js', old: '', new: 'y' }), /non-empty/);
-    assert.throws(() => tools.edit.run({ path: '.env', old: 'a', new: 'b' }), /secret/);
-    assert.throws(() => tools.edit.run({ path: 'ghost.js', old: 'a', new: 'b' }), /file not found/);
+    await assert.rejects(() => tools.edit.run({ path: 'api.js', old: 'x', new: 'x' }), /identical/);
+    await assert.rejects(() => tools.edit.run({ path: 'api.js', old: '', new: 'y' }), /non-empty/);
+    await assert.rejects(() => tools.edit.run({ path: '.env', old: 'a', new: 'b' }), /secret/);
+    await assert.rejects(() => tools.edit.run({ path: 'ghost.js', old: 'a', new: 'b' }), /file not found/);
   } finally {
     cleanup();
   }

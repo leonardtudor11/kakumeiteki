@@ -1,8 +1,9 @@
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
-import { isSecretPath } from '../permissions.js';
+import { actionForFileChange, isSecretPath } from '../permissions.js';
+import { previewWrite } from '../diff.js';
 
-export function createWriteTool({ jail, undo }) {
+export function createWriteTool({ jail, config, undo, confirm }) {
   return {
     name: 'write',
     schema: {
@@ -20,12 +21,25 @@ export function createWriteTool({ jail, undo }) {
         },
       },
     },
-    run({ path, content } = {}) {
+    async run({ path, content } = {}) {
       if (typeof path !== 'string' || path.length === 0) throw new Error('path is required');
       if (typeof content !== 'string') throw new Error('content must be a string');
       const real = jail.resolve(path);
       if (isSecretPath(real)) throw new Error(`refusing to write potential secret file: ${path}`);
-      undo?.record({ path, real, op: 'write' });
+      // one raw read serves both the preview (utf8 view) and the undo blob (exact bytes)
+      let pre;
+      try {
+        pre = readFileSync(real);
+      } catch (err) {
+        if (err.code !== 'ENOENT') throw err;
+      }
+      const action = actionForFileChange(config?.permissions);
+      if (action === 'block') throw new Error(`write blocked: file changes are read-only under permissions "readonly"`);
+      if (action === 'ask') {
+        const approved = confirm ? await confirm({ tool: 'write', path, preview: previewWrite({ path, before: pre?.toString('utf8'), content }) }) : false;
+        if (!approved) throw new Error('write declined by user');
+      }
+      undo?.record({ path, real, op: 'write', content: pre });
       mkdirSync(dirname(real), { recursive: true });
       writeFileSync(real, content);
       return `wrote ${Buffer.byteLength(content)} bytes to ${path}`;

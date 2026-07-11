@@ -1,7 +1,8 @@
 import { readFileSync, writeFileSync } from 'node:fs';
-import { isSecretPath } from '../permissions.js';
+import { actionForFileChange, isSecretPath } from '../permissions.js';
+import { previewEdit } from '../diff.js';
 
-export function createEditTool({ jail, undo }) {
+export function createEditTool({ jail, config, undo, confirm }) {
   return {
     name: 'edit',
     schema: {
@@ -21,7 +22,7 @@ export function createEditTool({ jail, undo }) {
         },
       },
     },
-    run({ path, old, new: replacement, replaceAll = false } = {}) {
+    async run({ path, old, new: replacement, replaceAll = false } = {}) {
       if (typeof path !== 'string' || path.length === 0) throw new Error('path is required');
       if (typeof old !== 'string' || old.length === 0) throw new Error('old must be a non-empty string');
       if (typeof replacement !== 'string') throw new Error('new must be a string');
@@ -46,9 +47,15 @@ export function createEditTool({ jail, undo }) {
         throw new Error(`old string occurs ${count}x in ${path} — widen the anchor with surrounding lines so it is unique, or set replaceAll: true`);
       }
 
+      const applied = replaceAll ? count : 1;
+      const action = actionForFileChange(config?.permissions);
+      if (action === 'block') throw new Error(`edit blocked: file changes are read-only under permissions "readonly"`);
+      if (action === 'ask') {
+        const approved = confirm ? await confirm({ tool: 'edit', path, preview: previewEdit({ path, old, new: replacement, count: applied }) }) : false;
+        if (!approved) throw new Error('edit declined by user');
+      }
       undo?.record({ path, real, op: 'edit', content });
       writeFileSync(real, content.split(old).join(replacement));
-      const applied = replaceAll ? count : 1;
       return `edited ${path}: ${applied} replacement${applied === 1 ? '' : 's'}`;
     },
   };

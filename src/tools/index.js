@@ -11,8 +11,8 @@ import { DEFAULTS } from '../config.js';
 export function createTools({ jail, config = DEFAULTS, confirm, undo }) {
   const tools = [
     createReadTool({ jail }),
-    createWriteTool({ jail, undo }),
-    createEditTool({ jail, undo }),
+    createWriteTool({ jail, config, undo, confirm }),
+    createEditTool({ jail, config, undo, confirm }),
     createLsTool({ jail }),
     createGlobTool({ jail }),
     createGrepTool({ jail }),

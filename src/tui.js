@@ -10,7 +10,7 @@
 // refinement — deliberately omitted to avoid partial-line render bugs.)
 import * as readline from 'node:readline';
 import { homedir } from 'node:os';
-import { renderStatusBar, tildeCwd, modeMeta, RESET, DIM, YELLOW } from './statusbar.js';
+import { renderStatusBar, tildeCwd, modeMeta, RESET, DIM, YELLOW, GREEN, RED } from './statusbar.js';
 import { countMessages } from './context.js';
 import { runTurn } from './ui.js';
 
@@ -86,9 +86,16 @@ export async function runReplInteractive(agent, {
   function finish(val) { const r = resolveTask; resolveTask = null; r?.(val); }
   function cycleMode() { const i = (MODE_ORDER.indexOf(agent.mode) + 1) % MODE_ORDER.length; agent.setMode(MODE_ORDER[i]); renderBox(); }
 
-  confirmRef.fn = ({ command, class: cls }) => new Promise((resolve) => {
+  const colorPreview = (preview) => preview.split('\n').map((l) => {
+    if (l.startsWith('+ ')) return `${GREEN}${l}${RESET}`;
+    if (l.startsWith('- ')) return `${RED}${l}${RESET}`;
+    return `${DIM}${l}${RESET}`;
+  }).join('\n');
+
+  confirmRef.fn = ({ command, class: cls, preview }) => new Promise((resolve) => {
     clearBox();
-    output.write(`\n${YELLOW}allow ${cls} command:${RESET} ${command}\n[y/N] `);
+    if (preview) output.write(`\n${YELLOW}pending change:${RESET}\n${colorPreview(preview)}\n[y/N] `);
+    else output.write(`\n${YELLOW}allow ${cls} command:${RESET} ${command}\n[y/N] `);
     confirmBuf = '';
     confirmResolve = (answer) => { confirmResolve = null; resolve(/^y(es)?$/i.test(answer.trim())); };
   });

@@ -311,6 +311,14 @@ export function actionForCommand(command, permissions, { jail }) {
   return { action: ACTION_TABLE[cls][permissions], class: cls, reason };
 }
 
+// File tools (edit/write) are mutate-class by definition — same action table as bash:
+// safe asks (with a diff preview), auto applies, readonly blocks. Tools built without a
+// config (programmatic/test use) get 'auto'; every real path goes through createTools
+// with a loaded config.
+export function actionForFileChange(permissions) {
+  return ACTION_TABLE.mutate[permissions] ?? 'auto';
+}
+
 function realDeepest(abs) {
   let existing = abs;
   const tail = [];

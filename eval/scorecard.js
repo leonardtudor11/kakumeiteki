@@ -10,6 +10,16 @@ const __dir = dirname(fileURLToPath(import.meta.url));
 const MODELS = process.argv.slice(2).length ? process.argv.slice(2) : ['qwen3.5:4b', 'qwen2.5-coder:3b'];
 const RUNS = Number(process.env.RUNS ?? 2);
 
+// TASK_FILTER=11,12 runs only matching task-id prefixes and SKIPS all file writes —
+// partial runs print to stderr only, so they can never clobber the full-matrix
+// scorecard.md with a subset table.
+const FILTER = process.env.TASK_FILTER?.split(',').map((s) => s.trim()).filter(Boolean);
+const RUN_TASKS = FILTER ? TASKS.filter((t) => FILTER.some((f) => t.id.startsWith(f))) : TASKS;
+if (FILTER && !RUN_TASKS.length) {
+  process.stderr.write(`TASK_FILTER "${process.env.TASK_FILTER}" matches no tasks\n`);
+  process.exit(1);
+}
+
 function configFor(model) {
   return {
     provider: 'ollama',
@@ -34,11 +44,13 @@ function summarize(results, id) {
 
 const all = {};
 for (const model of MODELS) {
-  process.stderr.write(`\n=== ${model} — ${RUNS} runs x ${TASKS.length} tasks ===\n`);
+  process.stderr.write(`\n=== ${model} — ${RUNS} runs x ${RUN_TASKS.length} tasks${FILTER ? ' (filtered — no files written)' : ''} ===\n`);
   const t0 = Date.now();
-  const results = await runSuite(TASKS, { config: configFor(model), runs: RUNS, makeAgent: (c, o) => createAgent(c, o) });
-  const safe = model.replace(/[^a-z0-9]+/gi, '-');
-  writeFileSync(join(__dir, `scorecard-${safe}.md`), renderScorecard(results, { model, generatedAt: 'full-matrix' }));
+  const results = await runSuite(RUN_TASKS, { config: configFor(model), runs: RUNS, makeAgent: (c, o) => createAgent(c, o) });
+  if (!FILTER) {
+    const safe = model.replace(/[^a-z0-9]+/gi, '-');
+    writeFileSync(join(__dir, `scorecard-${safe}.md`), renderScorecard(results, { model, generatedAt: 'full-matrix' }));
+  }
   all[model] = results;
   const passed = results.filter((r) => r.pass).length;
   process.stderr.write(`${model}: ${passed}/${results.length} passed in ${((Date.now() - t0) / 60000).toFixed(1)} min\n`);
@@ -48,7 +60,7 @@ for (const model of MODELS) {
 const lines = ['# Eval scorecard — model comparison', '', `Models: ${MODELS.join(' vs ')} · ${RUNS} runs/task`, ''];
 lines.push(`| task | ${MODELS.map((m) => `${m} pass`).join(' | ')} | ${MODELS.map((m) => `${m} turns`).join(' | ')} | ${MODELS.map((m) => `${m} sec`).join(' | ')} |`);
 lines.push(`|---|${MODELS.map(() => '---').join('|')}|${MODELS.map(() => '---').join('|')}|${MODELS.map(() => '---').join('|')}|`);
-for (const task of TASKS) {
+for (const task of RUN_TASKS) {
   const s = MODELS.map((m) => summarize(all[m], task.id));
   lines.push(`| ${task.id} | ${s.map((x) => x.passRate).join(' | ')} | ${s.map((x) => x.turns).join(' | ')} | ${s.map((x) => x.sec).join(' | ')} |`);
 }
@@ -60,5 +72,5 @@ const totals = MODELS.map((m) => {
 lines.push('', '## Totals', '', ...totals.map((t) => `- \`${t.model}\`: ${t.line}`), '');
 
 const comparison = lines.join('\n');
-writeFileSync(join(__dir, 'scorecard.md'), comparison);
+if (!FILTER) writeFileSync(join(__dir, 'scorecard.md'), comparison);
 process.stderr.write('\n' + comparison + '\n');

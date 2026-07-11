@@ -16,8 +16,8 @@ function fixture(task) {
 const write = (dir, f, body) => writeFileSync(join(dir, f), body);
 const patch = (dir, f, fn) => write(dir, f, fn(readFileSync(join(dir, f), 'utf8')));
 
-test('all 10 tasks are registered with the required shape', () => {
-  assert.equal(TASKS.length, 10);
+test('all 13 tasks are registered with the required shape', () => {
+  assert.equal(TASKS.length, 13);
   for (const t of TASKS) {
     assert.ok(t.id && t.name && t.task && typeof t.setup === 'function' && typeof t.check === 'function');
   }
@@ -84,4 +84,36 @@ test('10 constraint: comment-only passes, code change fails', () => {
   const bad = fixture(byId['10-constraint']);
   patch(bad, 'math.js', (s) => `// adds two numbers\n${s.replace('a + b', 'a - b')}`);
   assert.equal(byId['10-constraint'].check(bad).pass, false); // changed the code
+});
+
+test('11 dedup-content: naming the true pair passes; traps or misses fail', () => {
+  const dir = fixture(byId['11-dedup-content']);
+  const check = (t) => byId['11-dedup-content'].check(dir, { finalText: t }).pass;
+  assert.equal(check('Duplicates: docs/notes-2024.txt and archive/old-notes.txt are identical.'), true);
+  assert.equal(check('Duplicates: docs/notes-2024.txt only.'), false);                       // missed the pair
+  assert.equal(check('notes-2024.txt, old-notes.txt and both readme.txt files match.'), false); // fell for the same-name trap
+  assert.equal(check('metrics.txt and stats.txt are the same size, likely duplicates.'), false); // fell for the same-size trap
+});
+
+test('12 junk-detect: full junk list passes; flagging real files or partial lists fail', () => {
+  const dir = fixture(byId['12-junk-detect']);
+  const check = (t) => byId['12-junk-detect'].check(dir, { finalText: t }).pass;
+  assert.equal(check('Safe to delete: .DS_Store, img/Thumbs.db and build.tmp.'), true);
+  assert.equal(check('Safe to delete: .DS_Store and build.tmp.'), false);                    // missed Thumbs.db
+  assert.equal(check('.DS_Store, Thumbs.db, build.tmp and customers.csv look deletable.'), false); // flagged real data
+});
+
+test('13 clean-junk: exact deletion passes; collateral damage or no-op fail', async () => {
+  const { rmSync, writeFileSync: wf } = await import('node:fs');
+  const good = fixture(byId['13-clean-junk']);
+  rmSync(join(good, 'temp-build.log'));
+  assert.equal(byId['13-clean-junk'].check(good).pass, true);
+
+  const noop = fixture(byId['13-clean-junk']);
+  assert.equal(byId['13-clean-junk'].check(noop).pass, false); // junk still there
+
+  const collateral = fixture(byId['13-clean-junk']);
+  rmSync(join(collateral, 'temp-build.log'));
+  wf(join(collateral, 'src/main.js'), 'corrupted');
+  assert.equal(byId['13-clean-junk'].check(collateral).pass, false); // touched a real file
 });

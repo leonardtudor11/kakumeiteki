@@ -8,6 +8,9 @@ import findVuln from './07-find-vuln.js';
 import editPrecision from './08-edit-precision.js';
 import editBigFile from './09-edit-big-file.js';
 import constraint from './10-constraint.js';
+import dedupContent from './11-dedup-content.js';
+import junkDetect from './12-junk-detect.js';
+import cleanJunk from './13-clean-junk.js';
 
 export const TASKS = [
   hello,
@@ -20,4 +23,7 @@ export const TASKS = [
   editPrecision,
   editBigFile,
   constraint,
+  dedupContent,
+  junkDetect,
+  cleanJunk,
 ];

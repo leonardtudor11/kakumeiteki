@@ -262,3 +262,41 @@ Owner asked for a functional sweep of untouched areas before the ladder. Finding
 
 Ladder next: qwen3:1.7b (pulled) then pull+run qwen3:4b, via TASK_FILTER-all (no file
 writes) — head table stays the flagship pair; ladder recorded in its own section.
+
+## 2026-07-12 — bilingual PDF guide + REAL Windows support (a security find fell out of it)
+
+Commits `4fd9bdb`..`9dee6d2`. Suite **360 / 359 pass / 1 skip**. Owner asked for a guide a
+non-technical friend could follow, then: "not just for mac".
+
+**PDF guide** (`docs/install-guide.{html,pdf}`, 9 pages, EN + RO side by side with proper
+diacritics): real annotated screenshots of nodejs.org / ollama.com / the GitHub repo page
+(captured headless; Windows variants captured with a Windows UA so the sites auto-select the
+right installer), ring highlights placed BESIDE each click target (v1's pins covered the
+buttons), install-first ordering, then benefits / measured capabilities / safety / troubleshooting.
+Regenerate: edit the HTML, then Chrome `--headless --print-to-pdf`. Owner constraints honoured:
+compact (no half-empty pages), no terminal-colour caveat.
+
+**Windows: the docs forced the code to be honest.** Two blockers + nine bypasses:
+- `bash` tool spawned `/bin/bash` and killed by POSIX process group → dead on Windows. Now
+  PowerShell (`-NoProfile`; it aliases ls/cat/rm so model-emitted POSIX commands still work),
+  `taskkill /T /F` for the process tree, platform-specific minimal env (no SystemRoot → PowerShell
+  will not even start).
+- **THE BUG**: `splitSegments` applied POSIX backslash-ESCAPING to Windows paths, so `C:\Windows`
+  parsed to `C:Windows` — stopped looking absolute → every jail/deny/outside check downstream
+  FAILED OPEN. Backslash is a separator on win32; backtick is the escape.
+- Deny-list W1–W20 + evasions closed, each found by PROBING (6) or adversarial review (3), each
+  now a regression test: `cmd /c <payload>` wrapper (payload re-classified recursively),
+  ``i`wr | i`ex`` (rules test the de-backticked reading), `Get-Content …\.ssh\id_rsa` read as
+  "read-only" (the win read-only branch returned early, skipping the secret/outside checks),
+  quoted system path, `-EncodedCommand`, `C:foo`, `C:\proj\..\..\Windows`, `$env:`-built values.
+- Jail folds case on win32 (NTFS); macOS keeps the strict compare on purpose.
+- `test/windows.test.js` — 12 tests, platform pinned so they run on any host.
+
+**Honest status recorded everywhere (README table, guide, tests):** Windows is implemented and
+unit-tested; NOT yet run end-to-end on real hardware. Rules proven, runtime unproven.
+
+Wiki: [[parser-platform-mismatch-fails-open]] — a wrong parse fails PERMISSIVELY; keep attack
+strings as tests.
+
+**Still open**: qwen3:4b ladder rung (background, ~1h) → then README "model → measured can/can't"
+table. Cloud adapter (openai-compat) parked by owner.

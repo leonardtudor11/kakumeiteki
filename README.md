@@ -76,7 +76,7 @@ typos can't silently do nothing.
 
 ## What to honestly expect from a 3–4B local model
 
-Measured on the built-in eval suite (10 script-checked tasks, no judgment calls —
+Measured on the built-in eval suite (13 script-checked tasks, no judgment calls —
 `eval/scorecard.md`), on an M1 8 GB:
 
 **Reliable:** read code and answer questions about it · find definitions and usages ·
@@ -104,8 +104,9 @@ the vibes.
 | 16 GB | `qwen2.5-coder:7b` / `qwen3.5:8b` | |
 | 32 GB+ | qwen3-coder 30B MoE class | |
 
-Judge any new model with the eval suite (`node eval/scorecard.js`) — 10 script-checked
-tasks, pass/fail + turns + seconds, no vibes. Verdicts live in `eval/scorecard.md`.
+Judge any new model with the eval suite (`node eval/scorecard.js`) — 13 script-checked
+tasks (coding + machine-assistant), pass/fail + turns + seconds, no vibes. Verdicts live
+in `eval/scorecard.md`. `TASK_FILTER=11,12 node eval/scorecard.js` re-measures a subset.
 
 ## Security posture (honest version)
 

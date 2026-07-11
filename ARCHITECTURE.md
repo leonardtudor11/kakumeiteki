@@ -33,7 +33,7 @@ loopback model endpoint.
 | `src/tui.js` | interactive raw-mode line editor: bordered input box, pinned status bar, mode cycle (TTY-only; pipes get plain readline) |
 | `src/tools/` | `read write edit ls glob grep bash skill` + `index.js` registry; `walk.js` shared traversal |
 | `skills/` | doctrine playbooks (auth, payments, resilience, scalability, rag, secrets-ops, observability, operations, security…) served read-only by the `skill` tool |
-| `eval/` | 10 script-checked tasks + `run.js` harness + `scorecard.js` full-matrix runner |
+| `eval/` | 13 script-checked tasks (coding + machine-assistant) + `run.js` harness + `scorecard.js` full-matrix runner (`TASK_FILTER` for subsets) |
 
 ## Data flow
 

@@ -1,6 +1,7 @@
 import { parseToolCalls } from './toolcall.js';
 import { needsCompaction, compact, countMessages } from './context.js';
 import { redact } from './redact.js';
+import { createLedger, recordTool, hasUncheckedChanges, verificationLine } from './confidence.js';
 
 export async function runTurn({ provider, session, tools = {}, messages, userInput, signal, maxTurns = 25, onDelta, budget }) {
   messages.push({ role: 'user', content: userInput });
@@ -11,6 +12,8 @@ export async function runTurn({ provider, session, tools = {}, messages, userInp
   let sameCount = 0;
   let nudged = false;
   let emptyNudged = false;
+  let verifyNudged = false;
+  const ledger = createLedger();
 
   try {
     for (let turn = 0; turn < maxTurns; turn++) {
@@ -53,7 +56,16 @@ export async function runTurn({ provider, session, tools = {}, messages, userInp
           messages.push({ role: 'user', content: '[your reply was empty] Give the final answer now as plain text — one line of result plus what you verified.' });
           continue;
         }
-        return { status: 'done', message: assistant };
+        if (!verifyNudged && hasUncheckedChanges(ledger)) {
+          verifyNudged = true;
+          session.append('verify_nudge', {});
+          messages.push({
+            role: 'user',
+            content: '[unverified] You changed files but no check ran afterwards. Run the command that proves the change works (the tests, or the script itself), then give the final answer with the ACTUAL result.',
+          });
+          continue;
+        }
+        return { status: 'done', message: assistant, verification: verificationLine(ledger) };
       }
 
       const sig = JSON.stringify(calls.map((c) => [c.name, c.args]));
@@ -78,6 +90,7 @@ export async function runTurn({ provider, session, tools = {}, messages, userInp
         session.append('tool_call', { name: call.name, args: call.args });
         const result = await executeTool(tools, call, signal);
         session.append('tool_result', { name: call.name, ok: result.ok, output: result.output });
+        recordTool(ledger, { name: call.name, args: call.args, ok: result.ok, output: result.output });
         messages.push({ role: 'tool', name: call.name, content: result.output });
       }
     }
@@ -94,7 +107,7 @@ export async function runTurn({ provider, session, tools = {}, messages, userInp
   }
 
   session.append('turn_cap', { maxTurns });
-  return { status: 'turn_cap' };
+  return { status: 'turn_cap', verification: verificationLine(ledger) };
 }
 
 function resolveCalls(assistant, toolNames) {

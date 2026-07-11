@@ -31,11 +31,14 @@ test('fenced protocol drives the loop (no native tool calls)', async () => {
     const mock = createMockProvider([
       { text: 'I will edit the file.\n```tool\n{"name": "edit", "args": {"path": "app.js", "old": "const x = 1;", "new": "const x = 2;"}}\n```' },
       { text: 'Done. Changed x to 2; the file now reads const x = 2.' },
+      { text: 'Done. No check command exists in this fixture.' },
     ]);
     const result = await runTurn({ provider: mock, session, tools, messages: [], userInput: 'set x to 2' });
     assert.equal(result.status, 'done');
     assert.equal(readFileSync(join(root, 'app.js'), 'utf8'), 'const x = 2;\n');
-    assert.deepEqual(types(session), ['user_message', 'assistant_message', 'tool_call', 'tool_result', 'assistant_message']);
+    // the unchecked edit draws exactly one verify-nudge, then the answer stands — loudly labelled
+    assert.equal(result.verification, 'UNVERIFIED — no check ran · changed: app.js');
+    assert.deepEqual(types(session), ['user_message', 'assistant_message', 'tool_call', 'tool_result', 'assistant_message', 'verify_nudge', 'assistant_message']);
   } finally {
     cleanup();
   }
@@ -48,6 +51,7 @@ test('gate: repair fires EXACTLY ONCE on garbage, then succeeds', async () => {
       { text: '```tool\n{"name": "edit", "args": {"path": "app.js", "old": "const x = 1;"\n```' },
       { text: '```tool\n{"name": "edit", "args": {"path": "app.js", "old": "const x = 1;", "new": "const x = 9;"}}\n```' },
       { text: 'Done — x is now 9.' },
+      { text: 'Done — x is now 9. No check available.' },
     ]);
     const result = await runTurn({ provider: mock, session, tools, messages: [], userInput: 'set x to 9' });
     assert.equal(result.status, 'done');

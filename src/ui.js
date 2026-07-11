@@ -10,6 +10,7 @@ export async function runTurn(agent, task, { output, errput, signal } = {}) {
   }
   renderer.flush();
   output.write('\n');
+  if (res.verification) output.write(`— ${res.verification}\n`);
   if (res.status === 'error') errput.write(`[error] ${res.error}\nsession saved at ${agent.session.path} — resume with --continue\n`);
   else if (res.status !== 'done') errput.write(`[${res.status}]${res.error ? ` ${res.error}` : ''}\n`);
   return res;

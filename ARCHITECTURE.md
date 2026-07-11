@@ -56,6 +56,9 @@ runTurn (loop.js), per iteration:
      · no calls → status done
   4. doom-guard: 3 identical (name+args) calls → nudge; repeat → status doom_loop
   5. execute tools; outputs redacted           (redact.js) and appended as role:tool
+     · every executed tool also feeds the verification ledger (confidence.js)
+  6. verify-nudge: final answer offered while edit/write changes have no bash check
+     after them → one "run the check" nudge; second offer is accepted as-is
   every step appends a typed event to the session JSONL (session.js)
 ```
 
@@ -63,6 +66,12 @@ Statuses `runTurn` can return: `done`, `protocol_failed`, `doom_loop`, `empty_an
 `cancelled`, `endpoint_error`, `turn_cap`. See DEBUGGING.md for what each signature means.
 `done` means the protocol completed with a non-empty answer — it does not certify the
 answer is correct; that is what verify steps and the eval suite are for.
+
+`done` and `turn_cap` also carry `verification`: a line kaku COMPUTES from the turn's
+ledger (confidence.js) — `verified n/m · <check> → exit 0 · changed: <files>`, or a loud
+`UNVERIFIED` when changes had no check, or nothing on read-only turns. The model cannot
+write this line; that is the point (IMPROVE §2). rename/trash count as self-verifying —
+their tool output already carries counted evidence; edit/write need a check command.
 
 ## The contracts that hold it together
 

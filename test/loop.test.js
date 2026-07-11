@@ -141,3 +141,63 @@ test('turn cap → status turn_cap, honest event, no crash', async () => {
     cleanup();
   }
 });
+
+// ---- verified-confidence line (IMPROVE §2): computed by the harness, never the model
+
+const fakeWrite = { run: () => 'wrote 10 bytes to a.js' };
+const fakeBash = { run: () => 'all tests pass' };
+
+test('verify-nudge: fabricated "done" after a write gets one nudge; compliant check → verified line', async () => {
+  const mock = createMockProvider([
+    { text: '', toolCalls: [{ name: 'write', args: { path: 'a.js', content: 'x' } }] },
+    { text: 'Done. All tests pass.', toolCalls: [] }, // fabrication — nothing ran
+    { text: '', toolCalls: [{ name: 'bash', args: { command: 'node --test a.test.js' } }] },
+    { text: 'Done. Tests actually pass.', toolCalls: [] },
+  ]);
+  const { session, cleanup } = tempSession();
+  try {
+    const result = await runTurn({ provider: mock, session, tools: { write: fakeWrite, bash: fakeBash }, messages: [], userInput: 'go' });
+    assert.equal(result.status, 'done');
+    assert.equal(result.verification, 'verified 1/1 · node --test a.test.js → exit 0 · changed: a.js');
+    const { events } = readSession(session.path);
+    assert.equal(events.filter((e) => e.type === 'verify_nudge').length, 1);
+    assert.match(mock.requests[2].messages.at(-1).content, /\[unverified\]/);
+  } finally {
+    cleanup();
+  }
+});
+
+test('verify-nudge fires once: second unchecked "done" is accepted with a loud UNVERIFIED line', async () => {
+  const mock = createMockProvider([
+    { text: '', toolCalls: [{ name: 'write', args: { path: 'a.js', content: 'x' } }] },
+    { text: 'Done.', toolCalls: [] },
+    { text: 'Done, trust me.', toolCalls: [] },
+  ]);
+  const { session, cleanup } = tempSession();
+  try {
+    const result = await runTurn({ provider: mock, session, tools: { write: fakeWrite }, messages: [], userInput: 'go' });
+    assert.equal(result.status, 'done');
+    assert.equal(result.verification, 'UNVERIFIED — no check ran · changed: a.js');
+    const { events } = readSession(session.path);
+    assert.equal(events.filter((e) => e.type === 'verify_nudge').length, 1);
+  } finally {
+    cleanup();
+  }
+});
+
+test('read-only turn: no verify nudge, no verification field', async () => {
+  const mock = createMockProvider([
+    { text: '', toolCalls: [{ name: 'echo', args: { value: 'x' } }] },
+    { text: 'answer: it is defined in a.js', toolCalls: [] },
+  ]);
+  const { session, cleanup } = tempSession();
+  try {
+    const result = await runTurn({ provider: mock, session, tools: { echo: echoTool }, messages: [], userInput: 'go' });
+    assert.equal(result.status, 'done');
+    assert.equal(result.verification, null);
+    const { events } = readSession(session.path);
+    assert.equal(events.filter((e) => e.type === 'verify_nudge').length, 0);
+  } finally {
+    cleanup();
+  }
+});

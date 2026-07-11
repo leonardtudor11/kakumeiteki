@@ -4,22 +4,24 @@ Models: qwen3.5:4b vs qwen2.5-coder:3b · 2 runs/task
 
 | task | qwen3.5:4b pass | qwen2.5-coder:3b pass | qwen3.5:4b turns | qwen2.5-coder:3b turns | qwen3.5:4b sec | qwen2.5-coder:3b sec |
 |---|---|---|---|---|---|---|
-| 01-hello-tool | 2/2 | 2/2 | 2.0 | 5.0 | 53.4 | 23.1 |
-| 02-read-answer | 2/2 | 1/2 | 1.0 | 1.5 | 29.5 | 9.1 |
-| 03-fix-test | 2/2 | 1/2 | 4.5 | 3.0 | 140.9 | 11.8 |
-| 04-add-function | 1/2 | 0/2 | 7.0 | 8.0 | 231.0 | 42.3 |
-| 05-rename | 0/2 | 0/2 | 8.0 | 6.0 | 231.3 | 34.6 |
-| 06-find-def | 0/2 | 2/2 | 3.5 | 2.5 | 85.0 | 12.5 |
-| 07-find-vuln | 2/2 | 2/2 | 1.0 | 2.0 | 71.3 | 18.4 |
-| 08-edit-precision | 2/2 | 2/2 | 2.0 | 2.0 | 52.8 | 12.1 |
-| 09-edit-big-file | 0/2 | 0/2 | 2.5 | 2.5 | 330.4 | 40.1 |
-| 10-constraint | 2/2 | 0/2 | 2.5 | 4.5 | 87.3 | 17.0 |
+| 01-hello-tool | 2/2 | 2/2 | 2.5 | 3.5 | 275.6 | 19.4 |
+| 02-read-answer | 2/2 | 1/2 | 1.0 | 3.0 | 482.3 | 18.0 |
+| 03-fix-test | 2/2 | 0/2 | 7.0 | 2.0 | 593.9 | 15.0 |
+| 04-add-function | 0/2 | 0/2 | 12.0 | 5.0 | 4166.3 | 43.5 |
+| 05-rename | 2/2 | 0/2 | 2.5 | 10.0 | 199.2 | 70.0 |
+| 06-find-def | 2/2 | 1/2 | 7.5 | 7.5 | 1367.8 | 58.4 |
+| 07-find-vuln | 2/2 | 2/2 | 1.0 | 2.0 | 854.4 | 23.1 |
+| 08-edit-precision | 2/2 | 1/2 | 3.0 | 7.5 | 643.4 | 31.1 |
+| 09-edit-big-file | 0/2 | 0/2 | 4.5 | 3.0 | 1641.5 | 23.0 |
+| 10-constraint | 2/2 | 0/2 | 3.5 | 6.5 | 1251.9 | 26.2 |
+| 11-dedup-content | 2/2 | 2/2 | 2.5 | 2.0 | 605.7 | 13.7 |
+| 12-junk-detect | 2/2 | 2/2 | 2.5 | 2.0 | 565.3 | 14.8 |
+| 13-clean-junk | 2/2 | 2/2 | 2.5 | 2.0 | 76.2 | 13.3 |
 
 ## Totals
 
-- `qwen3.5:4b`: **13/20** (avg 131.3s)
-- `qwen2.5-coder:3b`: **10/20** (avg 22.1s)
-
+- `qwen3.5:4b`: **22/26** (avg 978.7s)
+- `qwen2.5-coder:3b`: **13/26** (avg 28.4s)
 ## Machine-assistant classes — baseline BEFORE purpose-built tools (2026-07-11)
 
 Tasks 11–13 solved with the generic toolset only (bash/glob/read); the dedup / junk-scan /
@@ -110,3 +112,20 @@ recorded, not spun). Transcripts also exposed a real harness gap, now fixed: an
 UNTERMINATED ```json fence containing a valid tool call was silently treated as a final
 answer, ending a run on a syntax hiccup. The parser now treats an open fence with tool
 intent as an attempt (parse or repair).
+
+## Full-matrix gate (2026-07-11, 13 tasks × 2 models × 2 runs) — post-tools verdict
+
+Headline: `qwen3.5:4b` **22/26** (was 13/20 on the classic 10 alone) · `qwen2.5-coder:3b`
+**13/26** (was 6/20). Classic-10 subset: 3.5:4b **16/20** (+3 vs the lever run); tool wins
+(05-rename, 11–13) all HOLD inside the full matrix.
+
+**Timing columns of this run are INVALID for comparison** — the matrix ran ~7h wall-clock
+overnight (avg 978.7s/task vs the usual ~131s); the machine almost certainly slept mid-run,
+so wall-clock includes suspended time. Pass/fail is unaffected (every run completed).
+Re-time selectively under `caffeinate` before quoting any speed numbers from this table.
+
+Open flags (n=2 cells — remember 06-find-def: replay before believing):
+- 04-add-function 3.5:4b 1/2 → 0/2, both runs hit the 12-turn cap. Kept transcripts exist;
+  triage before any fix. Suspect: 12-tool registry crowding/distraction.
+- coder:3b classic-10 drifted 10/20 → 7/20 (03, 06, 08 each −1) while its machine-assistant
+  tasks went 0/6 → 6/6. Same suspect: tool-list size vs a 3B's attention. Needs replay.

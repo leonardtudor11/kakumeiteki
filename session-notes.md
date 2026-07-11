@@ -166,3 +166,14 @@ Commits `ed0620d..5a2b52f` (6). Suite: **268 tests, 267 pass, 1 skip, 0 fail** (
 **Next**: Phase 2 of the stronger+safe plan — safety net (pre-edit backups + `kaku undo` first step), drip execution, awaiting go.
 
 **Post-refactor live drive found a shipped v1.1 bug (`b46fbde`)**: interactive `exit`/Ctrl-C left a zombie kaku — stdin never paused, event loop never drained; offline suite was green throughout. Fixed (input.pause() in cleanup), regression-tested with the first mock-TTY tests of the editor loop (test/tui-editor.test.js, 271 tests now), and live-verified via expect-driven pty (clean EOF, exit 0). Owner: if you had lingering kaku processes after quitting, this was why — `ps aux | grep kaku` and kill any strays once.
+
+## 2026-07-11 (later) — Track 1 "safety net" COMPLETE (4 steps, drip-executed)
+
+Commits `8b51c60`, `0110553`, `383dc28`, `0374c14`. Suite grew 279→299 (298 pass, 1 skip).
+
+1. **Undo** (`8b51c60`): pre-mutation blob+manifest per session; `kaku undo` walks the stack, jail-checked, audited. Live-verified roundtrip.
+2. **Permissions gate + diff preview** (`0110553`): closed real gap — edit/write ignored `--permissions` entirely (readonly didn't block file edits!). Now: readonly blocks · safe asks with coloured diff preview · auto applies. Undo records only after approval.
+3. **`--scope <dir>`** (`383dc28`): consented out-of-cwd jail. `/` refused; home root/outside-home need interactive yes; prefix-trap tested. Live-verified all three guardrail paths + scoped model run.
+4. **Audit log** (`0374c14`): `<sessionDir>/audit.jsonl` — file outcomes, non-read-only bash, scope grants, undo restores. Redacted, paths only, best-effort (warns once, never breaks a turn). Live-verified applied→restored trail.
+
+Machine-assistant tools (Track 2) now unblocked — every prereq from RESUME §B.1 shipped.

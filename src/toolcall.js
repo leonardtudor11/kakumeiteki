@@ -39,7 +39,10 @@ export function parseToolCalls(text, { toolNames = [] } = {}) {
     try {
       obj = JSON.parse(block);
     } catch {
-      return repair(`your tool call is not valid JSON. Emit exactly one \`\`\`tool fenced block containing {"name": "...", "args": {...}} and nothing else. Offending block: ${truncate(block)}`);
+      obj = leadingJson(block);
+      if (obj === null) {
+        return repair(`your tool call is not valid JSON. Emit exactly one \`\`\`tool fenced block containing {"name": "...", "args": {...}} and nothing else. Offending block: ${truncate(block)}`);
+      }
     }
     const list = Array.isArray(obj) ? obj : [obj];
     for (const entry of list) {
@@ -84,6 +87,33 @@ function coerceArgs(value) {
       return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : null;
     } catch {
       return null;
+    }
+  }
+  return null;
+}
+
+// A block that STARTS with a valid call but continues with prose still counts —
+// measured live: a 3B appended its result sentence inside the fence and the parse
+// failure ended the run as protocol_failed.
+function leadingJson(block) {
+  if (block[0] !== '{' && block[0] !== '[') return null;
+  let depth = 0, inString = false, escaped = false;
+  for (let i = 0; i < block.length; i++) {
+    const ch = block[i];
+    if (escaped) { escaped = false; continue; }
+    if (ch === '\\') { escaped = true; continue; }
+    if (ch === '"') { inString = !inString; continue; }
+    if (inString) continue;
+    if (ch === '{' || ch === '[') depth++;
+    else if (ch === '}' || ch === ']') {
+      depth--;
+      if (depth === 0) {
+        try {
+          return JSON.parse(block.slice(0, i + 1));
+        } catch {
+          return null;
+        }
+      }
     }
   }
   return null;

@@ -46,6 +46,26 @@ test('malformed JSON in a tool fence → repair signal, not a throw', () => {
   assert.match(repair, /```tool/);
 });
 
+test('valid call followed by prose inside the fence still parses', () => {
+  const { calls, repair } = parse(
+    '```json\n{"name": "edit", "args": {"path": "sum.js", "old": "return a - b;", "new": "return a + b;"}}\nSum fixed. Test passes now.\n```'
+  );
+  assert.equal(repair, null);
+  assert.deepEqual(calls, [{ name: 'edit', args: { path: 'sum.js', old: 'return a - b;', new: 'return a + b;' } }]);
+});
+
+test('unterminated fence with a valid call plus trailing prose still parses', () => {
+  const { calls, repair } = parse('```json\n{"name": "read", "args": {"path": "sum.js"}}\nChecking the file now.');
+  assert.equal(repair, null);
+  assert.deepEqual(calls, [{ name: 'read', args: { path: 'sum.js' } }]);
+});
+
+test('trailing prose containing braces does not confuse the leading-JSON cut', () => {
+  const { calls, repair } = parse('```tool\n{"name": "ls", "args": {}}\nThen I will call {"name": "read"} next.\n```');
+  assert.equal(repair, null);
+  assert.deepEqual(calls, [{ name: 'ls', args: {} }]);
+});
+
 test('unknown tool name → repair naming available tools', () => {
   const { repair } = parse('```tool\n{"name": "delete_everything", "args": {}}\n```');
   assert.match(repair, /unknown tool "delete_everything"/);

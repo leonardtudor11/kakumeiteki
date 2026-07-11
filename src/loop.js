@@ -13,6 +13,7 @@ export async function runTurn({ provider, session, tools = {}, messages, userInp
   let nudged = false;
   let emptyNudged = false;
   let verifyNudged = false;
+  let stashedFinal = null; // the answer offered before a verify-nudge — never discard it
   const ledger = createLedger();
 
   try {
@@ -36,7 +37,7 @@ export async function runTurn({ provider, session, tools = {}, messages, userInp
         if (awaitingRepair) {
           session.append('protocol_failed', { message: repair });
           messages.push({ role: 'user', content: `[tool protocol error — giving up this turn] ${repair}` });
-          return { status: 'protocol_failed', repair };
+          return { status: 'protocol_failed', repair, verification: verificationLine(ledger) };
         }
         awaitingRepair = true;
         session.append('repair', { message: repair });
@@ -48,8 +49,14 @@ export async function runTurn({ provider, session, tools = {}, messages, userInp
       if (!calls.length) {
         if (!(assistant.content ?? '').trim()) {
           if (emptyNudged) {
+            // a mute model after a verify-nudge must not cost us the answer it
+            // already gave — return it, loudly labelled by the ledger
+            if (stashedFinal) {
+              session.append('verify_fallback', {});
+              return { status: 'done', message: stashedFinal, verification: verificationLine(ledger) };
+            }
             session.append('empty_answer', {});
-            return { status: 'empty_answer' };
+            return { status: 'empty_answer', verification: verificationLine(ledger) };
           }
           emptyNudged = true;
           session.append('empty_nudge', {});
@@ -58,10 +65,11 @@ export async function runTurn({ provider, session, tools = {}, messages, userInp
         }
         if (!verifyNudged && hasUncheckedChanges(ledger)) {
           verifyNudged = true;
+          stashedFinal = assistant;
           session.append('verify_nudge', {});
           messages.push({
             role: 'user',
-            content: '[unverified] You changed files but no check ran afterwards. Run the command that proves the change works (the tests, or the script itself), then give the final answer with the ACTUAL result.',
+            content: '[unverified] You changed files but no check ran afterwards. Run the command that proves the change works (the tests, or the script itself), then give the final answer with the ACTUAL result. If no check command exists here, say so in your final answer instead.',
           });
           continue;
         }
@@ -75,7 +83,7 @@ export async function runTurn({ provider, session, tools = {}, messages, userInp
       if (sameCount >= 3) {
         if (nudged) {
           session.append('doom_loop', { signature: sig });
-          return { status: 'doom_loop' };
+          return { status: 'doom_loop', verification: verificationLine(ledger) };
         }
         nudged = true;
         session.append('doom_nudge', { signature: sig });

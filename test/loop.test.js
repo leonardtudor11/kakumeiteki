@@ -185,6 +185,27 @@ test('verify-nudge fires once: second unchecked "done" is accepted with a loud U
   }
 });
 
+test('mute model after verify-nudge: pre-nudge answer survives with UNVERIFIED label', async () => {
+  const mock = createMockProvider([
+    { text: '', toolCalls: [{ name: 'write', args: { path: 'a.js', content: 'x' } }] },
+    { text: 'Done. Changed a.js.', toolCalls: [] }, // good answer, no check
+    { text: '', toolCalls: [] }, // mute after verify-nudge
+    { text: '', toolCalls: [] }, // mute after empty-nudge
+  ]);
+  const { session, cleanup } = tempSession();
+  try {
+    const result = await runTurn({ provider: mock, session, tools: { write: fakeWrite }, messages: [], userInput: 'go' });
+    assert.equal(result.status, 'done');
+    assert.equal(result.message.content, 'Done. Changed a.js.');
+    assert.equal(result.verification, 'UNVERIFIED — no check ran · changed: a.js');
+    const { events } = readSession(session.path);
+    assert.equal(events.filter((e) => e.type === 'verify_fallback').length, 1);
+    assert.equal(events.filter((e) => e.type === 'empty_answer').length, 0);
+  } finally {
+    cleanup();
+  }
+});
+
 test('read-only turn: no verify nudge, no verification field', async () => {
   const mock = createMockProvider([
     { text: '', toolCalls: [{ name: 'echo', args: { value: 'x' } }] },

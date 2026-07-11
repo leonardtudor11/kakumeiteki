@@ -25,6 +25,39 @@ Models: qwen3.5:4b vs qwen2.5-coder:3b · 2 runs/task
 
 <!-- HISTORY — measured ground truth below; the runner replaces only the table above this line -->
 
+## Capability ladder (2026-07-11, in progress) — Track 4, local models only
+
+Protocol: TASK_FILTER=all (no head-table writes), RUNS=2, caffeinate, same eval config
+as the gate (micro tier, 12-turn cap, 8192 ctx). Ladder rungs recorded here as they run.
+
+### Rung: qwen3:1.7b — 18/26 (avg 113.4s, 49.2 min wall)
+
+| task | pass | turns | sec |
+|---|---|---|---|
+| 01-hello-tool | 2/2 | 10.0 | 132.5 |
+| 02-read-answer | 2/2 | 1.0 | 9.9 |
+| 03-fix-test | 2/2 | 3.0 | 52.0 |
+| 04-add-function | 0/2 | 7.5 | 518.4 |
+| 05-rename | 2/2 | 7.0 | 220.7 |
+| 06-find-def | 0/2 | 9.0 | 170.2 |
+| 07-find-vuln | 2/2 | 1.0 | 25.5 |
+| 08-edit-precision | 2/2 | 3.0 | 41.4 |
+| 09-edit-big-file | 0/2 | 5.0 | 80.8 |
+| 10-constraint | 0/2 | 4.0 | 135.1 |
+| 11-dedup-content | 2/2 | 2.0 | 20.5 |
+| 12-junk-detect | 2/2 | 2.0 | 33.1 |
+| 13-clean-junk | 2/2 | 2.5 | 34.0 |
+
+The headline the whole project exists to measure: a 1.7B model scores 18/26 on this
+harness — ABOVE qwen2.5-coder:3b's 14/26 — because the tool-driven classes carry it
+(machine-assistant 6/6, rename 2/2, edit-precision 2/2). Its failures are exactly the
+reasoning-heavy classes (04 create-from-spec, 06 find-def, 10 constraint, 09 big-file).
+Harness makes simple things reliable; the model still sets the reasoning ceiling.
+
+Pending rungs: qwen3:4b (pulled, run interrupted — resume with
+`TASK_FILTER=01,...,13 RUNS=2 node eval/scorecard.js qwen3:4b` under caffeinate).
+
+
 ## Full-matrix gate (2026-07-11, post confidence line + ergonomics waves) — CLEAN TIMING
 
 Headline: `qwen3.5:4b` **24/26** (avg 123.6s — first clean full-matrix timing; the old

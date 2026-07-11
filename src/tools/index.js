@@ -7,6 +7,7 @@ import { createGrepTool } from './grep.js';
 import { createBashTool } from './bash.js';
 import { createDedupTool } from './dedup.js';
 import { createJunkscanTool } from './junkscan.js';
+import { createTrashTool } from './trash.js';
 import { createSkillTool } from './skill.js';
 import { DEFAULTS } from '../config.js';
 
@@ -21,6 +22,7 @@ export function createTools({ jail, config = DEFAULTS, confirm, undo, audit }) {
     createBashTool({ jail, config, confirm, audit }),
     createDedupTool({ jail }),
     createJunkscanTool({ jail }),
+    createTrashTool({ jail, config, undo, confirm, audit }),
     createSkillTool(),
   ];
   return Object.fromEntries(tools.map((tool) => [tool.name, tool]));

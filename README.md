@@ -84,6 +84,12 @@ list/explore project structure · follow output constraints · a single precise 
 small file (works, not guaranteed — verify the diff) · consult a playbook you name and
 apply it to a plan.
 
+**Machine-assistant (measured 2026-07-11, tool-driven — the tools do the heavy lifting):**
+find duplicate files by content (`dedup`) · spot junk/cache/OS litter (`junkscan`) ·
+delete safely with undo (`trash` — both tested models chose it over `rm` unprompted).
+Post-tool scores: qwen3.5:4b 9/9, qwen2.5-coder:3b 7/8 — versus 4/6 and 0/6 with generic
+tools only. Full A/B history in `eval/scorecard.md`.
+
 **Not reliable at this size — don't pretend otherwise:** fixing a failing test ·
 renaming across multiple files · edits deep inside large files · any multi-step task
 that requires holding a plan across many tool calls. Both tested models scored 0/2 on

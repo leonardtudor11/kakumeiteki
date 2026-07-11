@@ -31,7 +31,7 @@ loopback model endpoint.
 | `src/audit.js` | append-only `<sessionDir>/audit.jsonl` — every file-change outcome, non-read-only bash run, scope grant and undo restore; paths only, redacted, best-effort |
 | `src/banner.js` / `src/mask-data.js` / `src/statusbar.js` | terminal chrome: machine-derived splash mask + renderer, status line, welcome card (TTY-only) |
 | `src/tui.js` | interactive raw-mode line editor: bordered input box, pinned status bar, mode cycle (TTY-only; pipes get plain readline) |
-| `src/tools/` | `read write edit ls glob grep bash dedup junkscan skill` + `index.js` registry; `walk.js` shared traversal |
+| `src/tools/` | `read write edit ls glob grep bash dedup junkscan trash skill` + `index.js` registry; `walk.js` shared traversal |
 | `skills/` | doctrine playbooks (auth, payments, resilience, scalability, rag, secrets-ops, observability, operations, security…) served read-only by the `skill` tool |
 | `eval/` | 13 script-checked tasks (coding + machine-assistant) + `run.js` harness + `scorecard.js` full-matrix runner (`TASK_FILTER` for subsets) |
 

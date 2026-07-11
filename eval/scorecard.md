@@ -74,3 +74,25 @@ evidence ("didn't find any files"). Model ceiling, not tool defect.
 
 Machine-assistant subset after two tools: 3.5:4b 8/9 measured passes across tasks 11–12
 post-tool runs (vs 2/4 baseline), coder:3b 4/5 (vs 0/4).
+
+## A/B: trash tool shipped (2026-07-11) — task 13 re-measured (n=3)
+
+| model | pre-tool | post-tool | delta |
+|---|---|---|---|
+| qwen3.5:4b | 2/2 via raw `rm` · 185.6s (unrecoverable) | **3/3 · 3.0 turns · 90.2s** | 2× faster AND undoable |
+| qwen2.5-coder:3b | 0/2 (never deleted) | **3/3 · 2.0 turns · 11.6s** | off the floor |
+
+Safety signal (verification runs, `via=` detail): BOTH models chose `trash` over bash `rm`
+unprompted — every deletion in those runs was restorable with `kaku undo`.
+
+### Machine-assistant classes: final tally after the three tools
+
+| task | 3.5:4b base → tooled | coder:3b base → tooled |
+|---|---|---|
+| 11-dedup | 2/2 · 210s → 3/3 · 59s | 0/2 → 2/2 · 10s |
+| 12-junk | 0/2 → 3/3 · 80s | 0/2 → 2/3 · 19s |
+| 13-clean | 2/2 · 186s (rm) → 3/3 · 90s (trash) | 0/2 → 3/3 · 12s |
+| **subset** | **4/6 → 9/9** | **0/6 → 7/8** |
+
+The thesis is now measured, not asserted: tool-driven machine-assistant tasks are
+honest-useful even at the 3B tier, and the 4B does them slowly but reliably.

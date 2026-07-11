@@ -3,7 +3,7 @@ import { dirname } from 'node:path';
 import { actionForFileChange, isSecretPath } from '../permissions.js';
 import { previewWrite } from '../diff.js';
 
-export function createWriteTool({ jail, config, undo, confirm }) {
+export function createWriteTool({ jail, config, undo, confirm, audit }) {
   return {
     name: 'write',
     schema: {
@@ -34,14 +34,21 @@ export function createWriteTool({ jail, config, undo, confirm }) {
         if (err.code !== 'ENOENT') throw err;
       }
       const action = actionForFileChange(config?.permissions);
-      if (action === 'block') throw new Error(`write blocked: file changes are read-only under permissions "readonly"`);
+      if (action === 'block') {
+        audit?.append({ kind: 'file', tool: 'write', path, outcome: 'blocked' });
+        throw new Error(`write blocked: file changes are read-only under permissions "readonly"`);
+      }
       if (action === 'ask') {
         const approved = confirm ? await confirm({ tool: 'write', path, preview: previewWrite({ path, before: pre?.toString('utf8'), content }) }) : false;
-        if (!approved) throw new Error('write declined by user');
+        if (!approved) {
+          audit?.append({ kind: 'file', tool: 'write', path, outcome: 'declined' });
+          throw new Error('write declined by user');
+        }
       }
       undo?.record({ path, real, op: 'write', content: pre });
       mkdirSync(dirname(real), { recursive: true });
       writeFileSync(real, content);
+      audit?.append({ kind: 'file', tool: 'write', path, outcome: 'applied' });
       return `wrote ${Buffer.byteLength(content)} bytes to ${path}`;
     },
   };

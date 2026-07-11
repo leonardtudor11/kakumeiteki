@@ -1,6 +1,6 @@
 import { readFileSync, realpathSync, statSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { basename, join, resolve } from 'node:path';
 import * as readline from 'node:readline/promises';
 
 import { loadConfig, defaultPaths } from './config.js';
@@ -9,6 +9,7 @@ import { createAgent } from './agent.js';
 import { createJail, scopeConsent } from './permissions.js';
 import { latestSessionFor, reopenSession } from './session.js';
 import { undoDirFor, nextUndo, restore } from './undo.js';
+import { createAuditLog } from './audit.js';
 import { runTurn } from './ui.js';
 import { runDoctor } from './doctor.js';
 import { showBanner, showWelcome } from './banner.js';
@@ -119,6 +120,8 @@ export async function main(argv = process.argv.slice(2), { cwd = process.cwd() }
       return 1;
     }
     cwd = scoped;
+    createAuditLog({ file: join(expandTilde(config.sessionDir), 'audit.jsonl'), root: scoped })
+      .append({ kind: 'scope', level: scopeConsent(scoped).level, outcome: 'granted' });
   }
 
   if (parsed.command === 'undo') return runUndo(config, { cwd, yes: parsed.yes });
@@ -296,6 +299,8 @@ export async function runUndo(config, {
   }
   restore(dir, entry);
   reopenSession(sessionPath).append('undo_restore', { n: entry.n, op: entry.op, path: entry.path });
+  createAuditLog({ file: join(expandTilde(config.sessionDir), 'audit.jsonl'), root: jail.root, session: basename(sessionPath) })
+    .append({ kind: 'undo', n: entry.n, op: entry.op, path: entry.path, outcome: 'restored' });
   output.write(entry.existed ? `restored ${entry.path}\n` : `removed ${entry.path}\n`);
   return 0;
 }

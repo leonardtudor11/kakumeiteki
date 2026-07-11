@@ -8,15 +8,15 @@ import { createBashTool } from './bash.js';
 import { createSkillTool } from './skill.js';
 import { DEFAULTS } from '../config.js';
 
-export function createTools({ jail, config = DEFAULTS, confirm, undo }) {
+export function createTools({ jail, config = DEFAULTS, confirm, undo, audit }) {
   const tools = [
     createReadTool({ jail }),
-    createWriteTool({ jail, config, undo, confirm }),
-    createEditTool({ jail, config, undo, confirm }),
+    createWriteTool({ jail, config, undo, confirm, audit }),
+    createEditTool({ jail, config, undo, confirm, audit }),
     createLsTool({ jail }),
     createGlobTool({ jail }),
     createGrepTool({ jail }),
-    createBashTool({ jail, config, confirm }),
+    createBashTool({ jail, config, confirm, audit }),
     createSkillTool(),
   ];
   return Object.fromEntries(tools.map((tool) => [tool.name, tool]));

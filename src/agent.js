@@ -6,7 +6,9 @@ import { openSession, reopenSession, loadSession, latestSessionFor, resolveSessi
 import { budgetFor, compact, needsCompaction, countMessages } from './context.js';
 import { preloadNamedFiles } from './preload.js';
 import { createUndoRecorder } from './undo.js';
+import { createAuditLog } from './audit.js';
 import { runTurn } from './loop.js';
+import { basename, join } from 'node:path';
 
 const DEFAULT_MICRO_CTX = 8192;
 
@@ -43,7 +45,8 @@ export async function createAgent(config, { cwd = process.cwd(), sessionDir, con
   }
 
   const undo = createUndoRecorder(session.path);
-  const tools = createTools({ jail, config, confirm, undo });
+  const audit = createAuditLog({ file: join(dir, 'audit.jsonl'), root: jail.root, session: basename(session.path) });
+  const tools = createTools({ jail, config, confirm, undo, audit });
   const system = buildSystemPrompt({ tier, mode: config.mode, tools: Object.values(tools), cwd: jail.root });
 
   let messages = [{ role: 'system', content: system }, ...(history ?? [])];

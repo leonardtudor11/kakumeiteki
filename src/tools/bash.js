@@ -1,7 +1,8 @@
 import { spawn } from 'node:child_process';
 import { actionForCommand } from '../permissions.js';
+import { trimCommand } from '../audit.js';
 
-export function createBashTool({ jail, config, confirm }) {
+export function createBashTool({ jail, config, confirm, audit }) {
   const { timeoutMs, maxOutputBytes } = config.bash;
 
   return {
@@ -24,11 +25,20 @@ export function createBashTool({ jail, config, confirm }) {
       if (typeof command !== 'string' || !command.trim()) throw new Error('command is required');
 
       const { action, class: cls, reason } = actionForCommand(command, config.permissions, { jail });
-      if (action === 'block') throw new Error(`command blocked (${reason})`);
+      // read-only commands stay out of the audit log — it records what could change the machine
+      const auditBash = (outcome) => { if (cls !== 'read-only') audit?.append({ kind: 'bash', class: cls, command: trimCommand(command), outcome }); };
+      if (action === 'block') {
+        auditBash('blocked');
+        throw new Error(`command blocked (${reason})`);
+      }
       if (action === 'ask') {
         const approved = confirm ? await confirm({ command, class: cls, reason }) : false;
-        if (!approved) throw new Error(`command requires approval and was declined (${reason})`);
+        if (!approved) {
+          auditBash('declined');
+          throw new Error(`command requires approval and was declined (${reason})`);
+        }
       }
+      auditBash('run');
       return execute(command, { cwd: jail.root, timeoutMs, maxOutputBytes, signal });
     },
   };

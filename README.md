@@ -119,6 +119,10 @@ tasks, pass/fail + turns + seconds, no vibes. Verdicts live in `eval/scorecard.m
 - File edits/writes go through the **same permission gate**: `readonly` blocks them,
   `safe` shows a diff preview and asks, and every applied change is backed by
   `kaku undo`.
+- An **audit log** (`<sessionDir>/audit.jsonl`, append-only) records every file-change
+  outcome (applied/declined/blocked), non-read-only bash run, `--scope` grant and undo
+  restore — paths and outcomes only, never file content, secrets redacted. One place to
+  answer "what did kaku change on this machine".
 - Secret files (`.env`, keys, `~/.ssh`, …) are refused; secret strings (API keys, JWTs,
   PEM blocks) are **redacted** from everything the model sees or the transcript stores.
 - Zero network from the agent core except your local Ollama endpoint.

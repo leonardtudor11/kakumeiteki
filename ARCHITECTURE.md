@@ -28,6 +28,7 @@ loopback model endpoint.
 | `src/doctor.js` | `kaku doctor` — Node/Ollama/model checks with exact fix commands |
 | `src/undo.js` | pre-mutation backups (blob + manifest per session) + the undo stack behind `kaku undo` |
 | `src/diff.js` | zero-dep change previews (`previewEdit` / `previewWrite`) shown in the safe-mode confirm |
+| `src/audit.js` | append-only `<sessionDir>/audit.jsonl` — every file-change outcome, non-read-only bash run, scope grant and undo restore; paths only, redacted, best-effort |
 | `src/banner.js` / `src/mask-data.js` / `src/statusbar.js` | terminal chrome: machine-derived splash mask + renderer, status line, welcome card (TTY-only) |
 | `src/tui.js` | interactive raw-mode line editor: bordered input box, pinned status bar, mode cycle (TTY-only; pipes get plain readline) |
 | `src/tools/` | `read write edit ls glob grep bash skill` + `index.js` registry; `walk.js` shared traversal |

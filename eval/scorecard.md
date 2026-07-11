@@ -169,3 +169,26 @@ verified-confidence line (IMPROVE §2, next on the roadmap) is designed to catch
 
 Suite: 332 tests, 331 pass, 1 skip. Every fix regression-tested offline; both waves
 reviewer-audited before push.
+
+## A/B: verified-confidence line shipped (2026-07-11, `631e227`) — IMPROVE §2
+
+The harness now computes a per-turn verification line from the evidence ledger
+(edit/write need a bash check after them; rename/trash self-verify via tool output;
+exit codes parsed from kaku's own trailing marker). Final answer with unchecked changes
+draws ONE verify-nudge, then stands with a loud UNVERIFIED label. The model cannot
+write the line. Measured (n=3, caffeinate):
+
+| task | pre | post | verdict |
+|---|---|---|---|
+| 04-add-function 3.5:4b | 2/3 · 341.7s | 2/3 · 371.8s (9.3 turns) | rate held; failure MODE changed — see below |
+| 08-edit-precision coder:3b | 3/3 replay (1/2 gate) | 2/3 · 24.8s | historical wobble; verify-nudge never fired in the failure (zero edits applied → ledger rightly empty; classic anchor hallucination + doom loop) |
+| 13-clean-junk coder:3b | 3/3 | 3/3 · 2.0 turns | zero friction on the self-verifying trash path — as designed |
+
+The qualitative win: 04's pre-feature failure FABRICATED "all 5 tests passed" (nothing
+ran). Post-feature, the failed run ran the real test unprompted on turn 2, saw the
+actual failing case, and died honestly iterating on its regex until turn cap — with the
+phantom-prefix hint visibly redirecting two `proj/` relapses mid-run. Fabrication →
+honest iteration is the behavior this feature exists to buy; n=3, so watch it, but the
+direction is measured, not asserted.
+
+Suite: 344 tests, 343 pass, 1 skip.

@@ -219,3 +219,23 @@ stays tracked (RESUME.md claim fixed, `52ce2f4`). All replays under caffeinate �
   direct evidence for the verified-confidence line (IMPROVE §2) as the next highest-value feature.
 - Both waves cavecrew-reviewer-audited pre-push; audit found the glob/trash/dedup/junkscan hint
   gaps + ..-path hint hygiene, all addressed. Sensitive sweep clean on every push.
+
+## 2026-07-11 (later) — verified-confidence line shipped + measured (owner pulled it ahead)
+
+Commit `631e227` (+ ground-truth update). Suite **344 / 343 pass / 1 skip**. Owner decisions:
+confidence line NOW; openai-compat (cloud adapter) DEFERRED — all-local focus; capability
+ladder stays queued as local work.
+
+- `src/confidence.js` + loop wiring: per-turn evidence ledger → harness-computed line
+  (`— verified 1/1 · node --test → exit 0 · changed: slugify.js` / loud `UNVERIFIED`).
+  edit/write need a bash check after them; rename/trash self-verify; exit parsed from
+  kaku's own LAST `[exit N]` marker (echo-spoof-proof, reviewer catch). One verify-nudge
+  max, mirrors empty-nudge; read-only turns print nothing. Line computed on return,
+  never stored, never model-written.
+- Measured (scorecard §confidence): 04 rate held 2/3; failure mode flipped fabrication →
+  honest test-run + capped iteration (the whole point); 08 2/3 = historical wobble, nudge
+  not involved (zero applied edits = empty ledger, correct); 13 3/3 zero friction.
+- Session event `verify_nudge` documented in ARCHITECTURE.md loop section.
+
+**Next per owner order**: capability ladder (local quantized models scorecard) → PDF
+install guide (§C, still owed). Cloud adapter parked until owner asks.

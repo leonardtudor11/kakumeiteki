@@ -43,3 +43,18 @@ Failure modes (from kept transcripts):
 
 Targets for the tools (Track 2): dedup + junk-detect + clean in ≤2 turns, <60s on 3.5:4b,
 and coder:3b lifted off 0/6 — measured on this same table after the tools ship.
+
+## A/B: dedup tool shipped (2026-07-11) — task 11 re-measured
+
+| model | pre-tool | post-tool | delta |
+|---|---|---|---|
+| qwen3.5:4b | 2/2 · 7.0 turns · 210.3s | **3/3 · 2.0 turns · 58.8s** (n=3) | 3.6× faster, 100% pass |
+| qwen2.5-coder:3b | 0/2 (advised, never acted) | **2/2 · 2.0 turns · 10.4s** | off the floor entirely |
+
+Targets (≤2 turns, <60s on 3.5:4b, coder:3b >0) all met. Two tool-ergonomics bugs were
+found BY these runs and fixed mid-measurement (each regression-tested):
+- a nonexistent scan dir silently reported "no duplicate files found" — the model guessed
+  a subdir name and the tool confirmed a falsehood; now a loud error the repair loop
+  recovers from (same fix applied to glob, which had the identical lie).
+- `{"path": ""}` was rejected ("path must be a non-empty string") and doom-looped a run —
+  small models send "" for "no value"; empty string now means project root.

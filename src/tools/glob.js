@@ -1,3 +1,4 @@
+import { existsSync, statSync } from 'node:fs';
 import { relative, sep } from 'node:path';
 import { walkFiles } from './walk.js';
 
@@ -23,7 +24,13 @@ export function createGlobTool({ jail }) {
     },
     run({ pattern, path = '.' } = {}) {
       if (typeof pattern !== 'string' || pattern.length === 0) throw new Error('pattern is required');
+      if (path === '') path = '.'; // small models send "" for "no value" — measured live
       const start = jail.resolve(path);
+      // same defect class as dedup's (measured live): a missing search dir must error,
+      // not answer "no matches" — that reads as a confident falsehood to the model
+      if (!existsSync(start) || !statSync(start).isDirectory()) {
+        throw new Error(`no such directory: ${path} — omit the path argument to search the whole project`);
+      }
       const prefix = start === jail.root ? '' : relative(jail.root, start).split(sep).join('/');
       const re = globToRegExp(pattern);
 

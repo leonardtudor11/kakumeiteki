@@ -106,6 +106,15 @@ test('glob: no matches → friendly string; missing pattern → error', () => {
   }
 });
 
+test('glob: nonexistent search dir ERRORS instead of lying "no matches"', () => {
+  const { tools, cleanup } = setup();
+  try {
+    assert.throws(() => tools.glob.run({ pattern: '*.js', path: 'ghost-dir' }), /no such directory: ghost-dir/);
+  } finally {
+    cleanup();
+  }
+});
+
 test('globToRegExp: regex specials in filenames are escaped', () => {
   assert.ok(globToRegExp('a+b.js').test('a+b.js'));
   assert.ok(!globToRegExp('a+b.js').test('aab.js'));

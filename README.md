@@ -60,8 +60,9 @@ Don't have Ollama? Install it from [ollama.com](https://ollama.com), start the a
 | `--mode build\|refactor\|audit\|plan` | audit + plan are read-only by design |
 | `--permissions safe\|auto\|readonly` | `safe` (default) previews + asks before any change; `readonly` blocks all changes |
 | `--continue` / `--resume [id]` | resume sessions |
+| `--scope <dir>` | jail to another directory — explicit consent (`/` refused; home root or outside-home ask interactively) |
 | `doctor` | setup check |
-| `undo [--yes]` | revert the last file change (repeat to walk back) |
+| `undo [--yes]` | revert the last file change (repeat to walk back; honours `--scope`) |
 
 ## Config
 
@@ -109,7 +110,9 @@ tasks, pass/fail + turns + seconds, no vibes. Verdicts live in `eval/scorecard.m
 ## Security posture (honest version)
 
 - All file tools are locked in a **realpath jail** under the project directory —
-  symlink escapes and `../` tricks are tested (S1–S12).
+  symlink escapes and `../` tricks are tested (S1–S12). `--scope <dir>` moves the jail
+  only with explicit consent: `/` is never allowed, and the home root or anything
+  outside it demands an interactive yes on top of the flag.
 - Bash commands are **classified** (deny / network / read-only / mutate); anything not
   provably read-only asks first in `safe` mode. The deny-list (D1–D14) is a tripwire,
   not a sandbox — the jail, default-ask and cwd-pinning are the real guarantees.

@@ -1,12 +1,12 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, realpathSync, statSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import * as readline from 'node:readline/promises';
 
 import { loadConfig, defaultPaths } from './config.js';
 import { EndpointError } from './provider.js';
 import { createAgent } from './agent.js';
-import { createJail } from './permissions.js';
+import { createJail, scopeConsent } from './permissions.js';
 import { latestSessionFor, reopenSession } from './session.js';
 import { undoDirFor, nextUndo, restore } from './undo.js';
 import { runTurn } from './ui.js';
@@ -29,6 +29,8 @@ flags:
   --permissions <p>    safe | auto | readonly
   --continue           resume latest session for this directory
   --resume [id]        resume session by id (no id = latest)
+  --scope <dir>        jail to <dir> instead of the current directory (explicit consent:
+                       home root or outside-home asks interactively; / is refused)
   --yes                skip the undo confirmation
   -h, --help           show this help
   --version            print version`;
@@ -36,13 +38,17 @@ flags:
 const VALUE_FLAGS = { '--model': 'model', '--mode': 'mode', '--permissions': 'permissions' };
 
 export function parseArgv(argv) {
-  const out = { help: false, version: false, command: null, task: null, resume: null, yes: false, cliFlags: {} };
+  const out = { help: false, version: false, command: null, task: null, resume: null, yes: false, scope: null, cliFlags: {} };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if ((arg === 'doctor' || arg === 'undo') && out.command === null && i === 0) {
       out.command = arg;
     } else if (arg === '--yes') {
       out.yes = true;
+    } else if (arg === '--scope') {
+      const val = argv[++i];
+      if (val === undefined) throw new Error('--scope requires a directory');
+      out.scope = val;
     } else if (arg === '-h' || arg === '--help') {
       out.help = true;
     } else if (arg === '--version') {
@@ -99,6 +105,22 @@ export async function main(argv = process.argv.slice(2), { cwd = process.cwd() }
   }
 
   if (parsed.command === 'doctor') return runDoctor(config);
+
+  if (parsed.scope) {
+    let scoped;
+    try {
+      scoped = await consentScope(parsed.scope, { cwd });
+    } catch (err) {
+      console.error(err.message);
+      return 1;
+    }
+    if (scoped === null) {
+      console.error('scope declined — staying out');
+      return 1;
+    }
+    cwd = scoped;
+  }
+
   if (parsed.command === 'undo') return runUndo(config, { cwd, yes: parsed.yes });
 
   const confirmRef = { fn: null };
@@ -205,6 +227,36 @@ async function runReplPlain(agent, {
     rl.close();
   }
   return 0;
+}
+
+// --scope <dir>: explicit consent to jail somewhere other than the launch directory.
+// Existence + directory checks, then the consent policy (permissions.js): / refused,
+// home root or outside-home needs an interactive yes on a real TTY. Returns the
+// realpathed directory, or null if the user declined. Exported for tests.
+export async function consentScope(scope, {
+  cwd = process.cwd(), input = process.stdin, output = process.stdout,
+} = {}) {
+  const target = resolve(cwd, expandTilde(scope));
+  let real;
+  try {
+    real = realpathSync(target);
+  } catch {
+    throw new Error(`--scope: no such directory: ${scope}`);
+  }
+  if (!statSync(real).isDirectory()) throw new Error(`--scope: not a directory: ${scope}`);
+  const consent = scopeConsent(real);
+  if (consent.level === 'refuse') throw new Error(`--scope refused: ${consent.reason}`);
+  if (consent.level === 'confirm') {
+    if (!input.isTTY || !output.isTTY) {
+      throw new Error(`--scope ${scope} covers ${consent.reason} — that needs an interactive yes; run from a terminal or pick a narrower directory`);
+    }
+    output.write(`--scope grants the agent access to ${consent.reason}.\nSecret files stay refused and redacted; the permissions mode still gates changes.\n`);
+    const rl = readline.createInterface({ input, output });
+    const answer = await rl.question(`jail to ${real}? [y/N] `).catch(() => 'n');
+    rl.close();
+    if (!/^y(es)?$/i.test(answer.trim())) return null;
+  }
+  return real;
 }
 
 // kaku undo: revert the most recent not-yet-undone file change recorded for this

@@ -1,4 +1,5 @@
 import { realpathSync } from 'node:fs';
+import { homedir } from 'node:os';
 import { resolve, dirname, basename, join, sep } from 'node:path';
 
 export class JailError extends Error {
@@ -317,6 +318,16 @@ export function actionForCommand(command, permissions, { jail }) {
 // with a loaded config.
 export function actionForFileChange(permissions) {
   return ACTION_TABLE.mutate[permissions] ?? 'auto';
+}
+
+// --scope consent policy: jailing somewhere other than the launch directory is an
+// explicit per-invocation grant. The filesystem root is never allowed; the whole home
+// directory, or anything outside it, needs an interactive yes on top of the flag.
+export function scopeConsent(realDir, { home = homedir() } = {}) {
+  if (realDir === '/') return { level: 'refuse', reason: 'jailing to the filesystem root is never allowed' };
+  if (realDir === home) return { level: 'confirm', reason: 'your ENTIRE home directory — every personal file in it' };
+  if (!realDir.startsWith(home + '/')) return { level: 'confirm', reason: `a directory outside your home (${realDir})` };
+  return { level: 'ok', reason: '' };
 }
 
 function realDeepest(abs) {

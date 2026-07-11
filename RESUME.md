@@ -41,8 +41,9 @@ Run: `npm test` (bare `node --test`, offline) · `node eval/scorecard.js` (loads
   pattern lives in the owner's local notes, not here) + committer = noreply. Push
   standing-approved for this repo.
 - Live tests behind `KAKU_LIVE=1`; clean /tmp/kaku-eval-sessions after eval runs.
-- Update session-notes.md + .claude/learning-log.md at close. `.claude/` + session-notes
-  are local-only (gitignored).
+- Update session-notes.md + .claude/learning-log.md at close. `.claude/` is local-only
+  (gitignored); session-notes.md IS tracked and pushed to the public repo — it doubles as
+  the build log, so the pre-push sensitive sweep applies to it like everything else.
 
 ## Gotchas (do not rediscover)
 - Node 25: bare `node --test` only. Nested test runs must strip NODE_TEST_CONTEXT.

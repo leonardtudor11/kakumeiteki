@@ -58,3 +58,19 @@ found BY these runs and fixed mid-measurement (each regression-tested):
   recovers from (same fix applied to glob, which had the identical lie).
 - `{"path": ""}` was rejected ("path must be a non-empty string") and doom-looped a run —
   small models send "" for "no value"; empty string now means project root.
+
+## A/B: junkscan tool shipped (2026-07-11) — task 12 re-measured (n=3)
+
+| model | pre-tool | post-tool | delta |
+|---|---|---|---|
+| qwen3.5:4b | 0/2 (missed subdir Thumbs.db) | **3/3 · 2.7 turns · 80.4s** | gap closed |
+| qwen2.5-coder:3b | 0/2 | **2/3 · 2.7 turns · 18.5s** | off the floor |
+
+3.5:4b's only machine-assistant miss is gone — the deterministic tree walk finds what the
+model's shallow root listing missed. coder:3b's one residual failure is answer discipline,
+not detection: the kept transcript shows it called the tool, received the correct 3-file
+list, recited it correctly mid-run, then wrote a final message contradicting its own
+evidence ("didn't find any files"). Model ceiling, not tool defect.
+
+Machine-assistant subset after two tools: 3.5:4b 8/9 measured passes across tasks 11–12
+post-tool runs (vs 2/4 baseline), coder:3b 4/5 (vs 0/4).

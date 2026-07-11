@@ -1,6 +1,6 @@
 import { existsSync, statSync } from 'node:fs';
 import { basename, relative, sep } from 'node:path';
-import { isSecretPath } from '../permissions.js';
+import { isSecretPath, phantomPrefixHint } from '../permissions.js';
 import { walkFiles } from './walk.js';
 
 const MAX_HITS = 100;
@@ -63,7 +63,7 @@ export function createJunkscanTool({ jail }) {
       if (path === '') path = '.'; // small models send "" for "no value" — measured live
       const start = jail.resolve(path);
       if (!existsSync(start) || !statSync(start).isDirectory()) {
-        throw new Error(`no such directory: ${path} — omit the path argument to scan the whole project`);
+        throw new Error(`no such directory: ${path}${phantomPrefixHint(jail, path)} — omit the path argument to scan the whole project`);
       }
       const prefix = start === jail.root ? '' : relative(jail.root, start).split(sep).join('/');
 

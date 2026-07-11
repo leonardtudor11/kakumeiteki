@@ -1,6 +1,7 @@
 import { existsSync, statSync } from 'node:fs';
 import { relative, sep } from 'node:path';
 import { walkFiles } from './walk.js';
+import { phantomPrefixHint } from '../permissions.js';
 
 const MAX_RESULTS = 200;
 
@@ -29,7 +30,7 @@ export function createGlobTool({ jail }) {
       // same defect class as dedup's (measured live): a missing search dir must error,
       // not answer "no matches" — that reads as a confident falsehood to the model
       if (!existsSync(start) || !statSync(start).isDirectory()) {
-        throw new Error(`no such directory: ${path} — omit the path argument to search the whole project`);
+        throw new Error(`no such directory: ${path}${phantomPrefixHint(jail, path)} — omit the path argument to search the whole project`);
       }
       const prefix = start === jail.root ? '' : relative(jail.root, start).split(sep).join('/');
       const re = globToRegExp(pattern);

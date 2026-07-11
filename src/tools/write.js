@@ -1,5 +1,5 @@
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { dirname, basename, join } from 'node:path';
 import { actionForFileChange, isSecretPath } from '../permissions.js';
 import { previewWrite } from '../diff.js';
 
@@ -24,6 +24,16 @@ export function createWriteTool({ jail, config, undo, confirm, audit }) {
     async run({ path, content } = {}) {
       if (typeof path !== 'string' || path.length === 0) throw new Error('path is required');
       if (typeof content !== 'string') throw new Error('content must be a string');
+      // The phantom-prefix trap seeds here: a write to "<cwd-basename>/x" silently
+      // creates a nested copy the model then flails between. Loud refusal is
+      // recoverable; the silent wrong file was not (04-add-function transcripts).
+      const rootBase = basename(jail.root);
+      const [head, ...tail] = path.split('/');
+      if (tail.length && head === rootBase && !existsSync(join(jail.root, head))) {
+        throw new Error(
+          `refusing to write ${path}: you are already inside "${rootBase}" and it has no "${rootBase}/" subdirectory — did you mean "${tail.join('/')}"? (create the directory first if you really want it nested)`
+        );
+      }
       const real = jail.resolve(path);
       if (isSecretPath(real)) throw new Error(`refusing to write potential secret file: ${path}`);
       // one raw read serves both the preview (utf8 view) and the undo blob (exact bytes)

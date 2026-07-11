@@ -1,4 +1,5 @@
 import { readdirSync } from 'node:fs';
+import { phantomPrefixHint } from '../permissions.js';
 
 const MAX_ENTRIES = 200;
 
@@ -25,7 +26,7 @@ export function createLsTool({ jail }) {
       try {
         entries = readdirSync(real, { withFileTypes: true });
       } catch (err) {
-        if (err.code === 'ENOENT') throw new Error(`directory not found: ${path}`);
+        if (err.code === 'ENOENT') throw new Error(`directory not found: ${path}${phantomPrefixHint(jail, path)}`);
         if (err.code === 'ENOTDIR') throw new Error(`not a directory: ${path}`);
         throw err;
       }

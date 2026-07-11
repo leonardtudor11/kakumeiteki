@@ -225,3 +225,81 @@ test('registry: exposes all twelve tools with coherent schemas', () => {
     cleanup();
   }
 });
+
+// phantom cwd-basename prefix: the fixture root is literally named "proj", same
+// trap the eval workdir sets — "working in …/proj" must not become paths like proj/x
+test('read/edit/ls: phantom root-basename prefix gets a did-you-mean hint', async () => {
+  const { tools, cleanup } = setup();
+  try {
+    assert.throws(() => tools.read.run({ path: 'proj/api.js' }), /did you mean "api\.js"\?/);
+    await assert.rejects(() => tools.edit.run({ path: 'proj/api.js', old: 'getData', new: 'fetchData' }), /did you mean "api\.js"\?/);
+    assert.throws(() => tools.ls.run({ path: 'proj' }), /already inside "proj"/);
+  } finally {
+    cleanup();
+  }
+});
+
+test('read: no hint when the stripped path does not exist either', () => {
+  const { tools, cleanup } = setup();
+  try {
+    assert.throws(() => tools.read.run({ path: 'proj/ghost.js' }), (err) => {
+      assert.match(err.message, /file not found: proj\/ghost\.js/);
+      assert.doesNotMatch(err.message, /did you mean/);
+      return true;
+    });
+  } finally {
+    cleanup();
+  }
+});
+
+test('write: refuses to seed a phantom root-basename directory', async () => {
+  const { tools, cleanup } = setup();
+  try {
+    await assert.rejects(() => tools.write.run({ path: 'proj/slugify.js', content: 'x' }), /already inside "proj".*did you mean "slugify\.js"/);
+  } finally {
+    cleanup();
+  }
+});
+
+test('write: a REAL nested directory named like the root stays writable', async () => {
+  const { root, tools, cleanup } = setup();
+  try {
+    mkdirSync(join(root, 'proj'));
+    const out = await tools.write.run({ path: 'proj/inner.js', content: 'ok' });
+    assert.match(out, /wrote 2 bytes to proj\/inner\.js/);
+    assert.equal(readFileSync(join(root, 'proj', 'inner.js'), 'utf8'), 'ok');
+  } finally {
+    cleanup();
+  }
+});
+
+test('glob/trash/dedup/junkscan: phantom prefix hint fires consistently', async () => {
+  const { tools, cleanup } = setup();
+  try {
+    assert.throws(() => tools.glob.run({ pattern: '*.js', path: 'proj/src' }), /no such directory: proj\/src/);
+    assert.throws(() => tools.glob.run({ pattern: '*.js', path: 'proj' }), /already inside "proj"/);
+    await assert.rejects(() => tools.trash.run({ paths: ['proj/api.js'] }), /did you mean "api\.js"\?/);
+    assert.throws(() => tools.dedup.run({ path: 'proj' }), /already inside "proj"/);
+    assert.throws(() => tools.junkscan.run({ path: 'proj' }), /already inside "proj"/);
+  } finally {
+    cleanup();
+  }
+});
+
+test('phantom hint never suggests an upward path and survives a trailing slash', () => {
+  const { tools, cleanup } = setup();
+  try {
+    assert.throws(() => tools.read.run({ path: 'proj/../ghost.js' }), (err) => {
+      assert.match(err.message, /file not found/);
+      assert.doesNotMatch(err.message, /did you mean/);
+      return true;
+    });
+    assert.throws(() => tools.ls.run({ path: 'proj/' }), (err) => {
+      assert.match(err.message, /already inside "proj"/);
+      assert.doesNotMatch(err.message, /did you mean ""/);
+      return true;
+    });
+  } finally {
+    cleanup();
+  }
+});

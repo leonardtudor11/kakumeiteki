@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readFileSync, statSync, existsSync } from 'node:fs';
 import { relative, sep } from 'node:path';
-import { isSecretPath } from '../permissions.js';
+import { isSecretPath, phantomPrefixHint } from '../permissions.js';
 import { walkFiles } from './walk.js';
 
 const MAX_GROUPS = 50;
@@ -32,7 +32,7 @@ export function createDedupTool({ jail }) {
       // a missing dir must ERROR, not report "no duplicates" — measured live: the model
       // guessed a subdir name, walkFiles yielded nothing, and the tool confirmed a falsehood
       if (!existsSync(start) || !statSync(start).isDirectory()) {
-        throw new Error(`no such directory: ${path} — omit the path argument to scan the whole project`);
+        throw new Error(`no such directory: ${path}${phantomPrefixHint(jail, path)} — omit the path argument to scan the whole project`);
       }
       const prefix = start === jail.root ? '' : relative(jail.root, start).split(sep).join('/');
       const rel = (r) => (prefix ? `${prefix}/${r}` : r);

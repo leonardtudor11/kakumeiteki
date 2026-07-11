@@ -1,5 +1,5 @@
 import { existsSync, rmSync, statSync } from 'node:fs';
-import { actionForFileChange, isSecretPath } from '../permissions.js';
+import { actionForFileChange, isSecretPath, phantomPrefixHint } from '../permissions.js';
 
 // Machine-assistant tool: safe deletion. Each file's content is recorded in the session
 // undo store BEFORE removal (no backup -> no deletion), so `kaku undo` restores it —
@@ -34,7 +34,7 @@ export function createTrashTool({ jail, config, undo, confirm, audit }) {
         if (typeof p !== 'string' || p === '') throw new Error('every path must be a non-empty string');
         const real = jail.resolve(p);
         if (isSecretPath(real)) throw new Error(`refusing to trash potential secret file: ${p}`);
-        if (!existsSync(real)) throw new Error(`file not found: ${p} — nothing was trashed`);
+        if (!existsSync(real)) throw new Error(`file not found: ${p}${phantomPrefixHint(jail, p)} — nothing was trashed`);
         const stat = statSync(real);
         if (stat.isDirectory()) throw new Error(`${p} is a directory — trash its files individually; nothing was trashed`);
         targets.push({ path: p, real, size: stat.size });

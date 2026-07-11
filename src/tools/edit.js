@@ -1,5 +1,5 @@
 import { readFileSync, writeFileSync } from 'node:fs';
-import { actionForFileChange, isSecretPath } from '../permissions.js';
+import { actionForFileChange, isSecretPath, phantomPrefixHint } from '../permissions.js';
 import { previewEdit } from '../diff.js';
 
 export function createEditTool({ jail, config, undo, confirm, audit }) {
@@ -35,7 +35,7 @@ export function createEditTool({ jail, config, undo, confirm, audit }) {
       try {
         content = readFileSync(real, 'utf8');
       } catch (err) {
-        if (err.code === 'ENOENT') throw new Error(`file not found: ${path}`);
+        if (err.code === 'ENOENT') throw new Error(`file not found: ${path}${phantomPrefixHint(jail, path)}`);
         throw err;
       }
 

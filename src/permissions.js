@@ -1,4 +1,4 @@
-import { realpathSync } from 'node:fs';
+import { existsSync, realpathSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { resolve, dirname, basename, join, sep } from 'node:path';
 
@@ -49,6 +49,20 @@ export function isSecretPath(path) {
   if (segments.some((segment) => SECRET_DIRS.has(segment))) return true;
   if (SECRET_ENV_EXCEPTIONS.has(base)) return false;
   return SECRET_BASENAMES.some((re) => re.test(base));
+}
+
+// Small models re-derive the cwd's basename as a phantom subdirectory — "working in
+// …/myapp" plus absolute paths in error output becomes paths like myapp/file.js.
+// Measured on 04-add-function: all three failed runs died on this confusion.
+export function phantomPrefixHint(jail, path) {
+  const parts = String(path).split('/');
+  const base = basename(jail.root);
+  if (!base || parts[0] !== base) return '';
+  const stripped = parts.slice(1).join('/');
+  if (!stripped) return ` — you are already inside "${base}"`;
+  // never hint a path that walks upward — the jail would refuse it anyway
+  if (parts.includes('..') || !existsSync(join(jail.root, stripped))) return '';
+  return ` — you are already inside "${base}"; did you mean "${stripped}"?`;
 }
 
 const TEXT_DENY_RULES = [

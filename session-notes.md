@@ -197,3 +197,25 @@ Commits `d2cda48`, `830fa7e`. Suite **323 / 322 pass / 1 skip**. Wiki updated (3
 - **Open flags (n=2, replay before believing)**: 04-add-function 1/2→0/2 (both turn-capped) · coder:3b classic-10 drift 10/20→7/20. Shared suspect: 12-tool registry crowding small-model attention. 17 kept failure transcripts on disk for triage.
 
 **Next session start here**: (1) triage 04 + coder drift from kept transcripts — if tool-list crowding confirmed, candidate fix = tier-aware tool registry (micro tier gets a trimmed list); (2) caffeinate re-time; (3) then Track 4 (openai-compat + capability ladder) / verified-confidence line / PDF guide (§C still owed). RESUME.md itself now stale — owner call pending on session-notes tracking mismatch.
+
+## 2026-07-11 (later) — flag triage closed: NOT registry crowding; two ergonomics fix waves
+
+Commits `52ce2f4`..`db67e0a` (5). Suite **332 / 331 pass / 1 skip**. Owner decision: session-notes.md
+stays tracked (RESUME.md claim fixed, `52ce2f4`). All replays under caffeinate — clean timings.
+
+- **Old /tmp transcripts were gone** (macOS swept them) — refreshed via TASK_FILTER replays, n=3/cell.
+- **Flag 2 (coder:3b drift): variance.** 08 3/3, 06 2/3 (historical wobble), 03 1/3 with two
+  mechanical, fixable deaths. Registry-crowding hypothesis: not supported by transcripts.
+- **Flag 1 (04, 3.5:4b): real — 0/5 post-wave.** Root causes were NOT the 12-tool registry:
+  - Wave 1 (`aaf2c5e` `0c57116` `57c0c6d`): few-shot `src/app.js` primed path invention (both
+    models); valid fenced call + trailing prose inside the fence → protocol_failed (leadingJson
+    fallback now extracts it); bash timeout on the model's own infinite loop gave no diagnostic
+    (hint added); native-path unknown-tool error now lists available tools (the `move` hallucination).
+  - Wave 2 (`db67e0a`): THE real poison — model re-derives cwd basename as a phantom subdir
+    ("working in …/proj" → `proj/slugify.js`; write silently seeded a nested copy). Deterministic
+    counter: phantomPrefixHint on 7 tools + write guard refusing the phantom seed + 1 prompt rule.
+- **Measured**: 03 coder:3b 1/3 → 3/3 post wave 1 · 04 3.5:4b 0/3 → 0/3 → **2/3** post wave 2.
+- **04's residual failure = fabricated verification** ("all 5 tests passed", never ran them) —
+  direct evidence for the verified-confidence line (IMPROVE §2) as the next highest-value feature.
+- Both waves cavecrew-reviewer-audited pre-push; audit found the glob/trash/dedup/junkscan hint
+  gaps + ..-path hint hygiene, all addressed. Sensitive sweep clean on every push.

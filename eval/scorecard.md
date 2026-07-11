@@ -129,3 +129,43 @@ Open flags (n=2 cells — remember 06-find-def: replay before believing):
   triage before any fix. Suspect: 12-tool registry crowding/distraction.
 - coder:3b classic-10 drifted 10/20 → 7/20 (03, 06, 08 each −1) while its machine-assistant
   tasks went 0/6 → 6/6. Same suspect: tool-list size vs a 3B's attention. Needs replay.
+
+BOTH FLAGS RESOLVED 2026-07-11 — see "Flag triage + micro-ergonomics fix waves" below.
+
+## Flag triage + micro-ergonomics fix waves (2026-07-11, all replays under caffeinate)
+
+**Flag 2 (coder:3b classic drift) — verdict: VARIANCE.** Replay ×3: 08 3/3 (fully
+recovered), 06 2/3 (its historical wobble — failure is the old fabricate-after-failed-glob
+mode, no new mechanism), 03 1/3 (two mechanical deaths, both fixed below). No registry
+effect visible in transcripts.
+
+**Flag 1 (04-add-function, 3.5:4b) — verdict: REAL, and NOT registry crowding.** 0/3
+replay (0/5 combined post-tool-wave, avg 397s clean). Kept transcripts pinned three
+mechanisms, fixed in two waves:
+
+Wave 1 (`aaf2c5e`..`57c0c6d`): few-shot examples primed `src/` path invention (both models
+copied the example's `src/app.js` prefix — 3 sightings); a valid fenced call with trailing
+prose inside the fence died protocol_failed; a bash timeout on the model's own infinite
+loop (`slug.slice(-1)`) gave zero diagnostic; the native-path unknown-tool error (a
+hallucinated `move`) named no alternatives.
+
+Wave 2 (`db67e0a`): the deeper poison — models re-derive the cwd BASENAME as a phantom
+subdirectory ("working in …/proj" → paths like `proj/slugify.js`; write silently seeded a
+nested copy the model flailed between). Deterministic counter: phantomPrefixHint on 7
+tools' not-found errors + write refuses to seed the phantom dir + one micro-prompt rule.
+
+Measured A/B (n=3 per round):
+
+| round | 03 coder:3b | 04 qwen3.5:4b |
+|---|---|---|
+| pre-fix replay | 1/3 | 0/3 (avg 397.4s) |
+| post wave 1 | **3/3** (24.6s avg) | 0/3 — src/ gone, `proj/` phantom exposed |
+| post wave 2 | — | **2/3** (341.7s avg, 7.0 turns) |
+
+04's residual failure is MODEL CEILING, not harness: the guard redirected both phantom
+writes and the model recovered to the right path, then claimed "all 5 tests passed"
+WITHOUT ever running them — fabricated verification. That lie is exactly what the
+verified-confidence line (IMPROVE §2, next on the roadmap) is designed to catch.
+
+Suite: 332 tests, 331 pass, 1 skip. Every fix regression-tested offline; both waves
+reviewer-audited before push.

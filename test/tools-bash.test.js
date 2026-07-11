@@ -106,6 +106,7 @@ test('bash: timeout kills process and reports honestly', async () => {
   try {
     const out = await tools.bash.run({ command: 'sleep 5' });
     assert.match(out, /timed out after 300 ms/);
+    assert.match(out, /check that code for an infinite loop/);
   } finally {
     cleanup();
   }

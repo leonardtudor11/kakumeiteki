@@ -104,7 +104,7 @@ function resolveCalls(assistant, toolNames) {
 
 async function executeTool(tools, call, signal) {
   const tool = tools[call.name];
-  if (!tool) return { ok: false, output: `[tool error] unknown tool "${call.name}"` };
+  if (!tool) return { ok: false, output: `[tool error] unknown tool "${call.name}". Available tools: ${Object.keys(tools).join(', ')}` };
   try {
     const output = await tool.run(call.args ?? {}, { signal });
     return { ok: true, output: redact(String(output)) };

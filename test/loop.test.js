@@ -93,6 +93,7 @@ test('unknown tool → error fed back to model, loop continues', async () => {
     const toolResult = events.find((e) => e.type === 'tool_result');
     assert.equal(toolResult.ok, false);
     assert.match(toolResult.output, /unknown tool "missing"/);
+    assert.match(toolResult.output, /Available tools: echo/);
     assert.match(mock.requests[1].messages.at(-1).content, /unknown tool/);
   } finally {
     cleanup();

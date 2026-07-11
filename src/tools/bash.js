@@ -110,7 +110,7 @@ function execute(command, { cwd, timeoutMs, maxOutputBytes, signal }) {
 
       let text = Buffer.concat(chunks).subarray(0, maxOutputBytes).toString('utf8');
       if (truncated) text += `\n[output truncated at ${maxOutputBytes} bytes — process killed]`;
-      if (timedOut) text += `\n[timed out after ${timeoutMs} ms — process killed]`;
+      if (timedOut) text += `\n[timed out after ${timeoutMs} ms — process killed. The command may be stuck — if it runs code you just wrote, check that code for an infinite loop before retrying.]`;
       else if (!truncated && code !== 0 && code !== null) text += `\n[exit ${code}]`;
       else if (!truncated && code === null && killSignal) text += `\n[killed by ${killSignal}]`;
       resolvePromise(text.trim() || '(no output)');

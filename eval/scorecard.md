@@ -96,3 +96,17 @@ unprompted — every deletion in those runs was restorable with `kaku undo`.
 
 The thesis is now measured, not asserted: tool-driven machine-assistant tasks are
 honest-useful even at the 3B tier, and the 4B does them slowly but reliably.
+
+## A/B: rename tool shipped (2026-07-11) — task 05 re-measured (n=3)
+
+| model | pre-tool | post-tool | delta |
+|---|---|---|---|
+| qwen3.5:4b | 0/2 · 8.0 turns · 231.3s | **3/3 · 2.3 turns · 63.0s** | impossible class unlocked |
+| qwen2.5-coder:3b | 0/2 | 0/3 · 5.7 turns · 27.7s | unchanged — never discovers the tool |
+
+Honest split: structure lifted the 4B where prompt levers couldn't; the 3B kept editing
+file-by-file with hallucinated anchors and never reached for `rename` (discovery ceiling —
+recorded, not spun). Transcripts also exposed a real harness gap, now fixed: an
+UNTERMINATED ```json fence containing a valid tool call was silently treated as a final
+answer, ending a run on a syntax hiccup. The parser now treats an open fence with tool
+intent as an attempt (parse or repair).

@@ -19,6 +19,18 @@ export function parseToolCalls(text, { toolNames = [] } = {}) {
     }
   }
 
+  // an UNTERMINATED fence with tool intent must still count as an attempt — measured
+  // live: a model emitted ```json {…call…} without the closing fence and the silence
+  // ended its task as if that were a final answer
+  if (!fenced.length) {
+    const open = /```(\w+)?\n([\s\S]+)$/.exec(content);
+    if (open) {
+      const lang = (open[1] ?? '').toLowerCase();
+      const body = open[2].trim();
+      if (lang === 'tool' || ((lang === 'json' || lang === 'jsonc' || lang === '') && looksLikeCall(body))) fenced.push(body);
+    }
+  }
+
   const blocks = fenced.length ? fenced : bareCandidate(content);
 
   const calls = [];

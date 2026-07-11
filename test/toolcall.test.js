@@ -83,6 +83,19 @@ test('without toolNames, unknown-name check is skipped (parser reusable)', () =>
   assert.deepEqual(calls, [{ name: 'anything', args: {} }]);
 });
 
+test('unterminated fence with tool intent still counts as an attempt (measured live)', () => {
+  // valid call, missing closing fence — must parse, not silently become a final answer
+  const open = parse('```json\n{"name": "read", "args": {"path": "a.js"}}');
+  assert.deepEqual(open.calls, [{ name: 'read', args: { path: 'a.js' } }]);
+  // unterminated ```tool with broken JSON → repair, not silence
+  const broken = parse('```tool\n{"name": "read", "args": {');
+  assert.ok(broken.repair, 'malformed open tool fence repairs');
+  // unterminated fence with plain prose stays a final answer
+  const prose = parse('```json\n{"note": "just data, no tool shape"');
+  assert.deepEqual(prose.calls, []);
+  assert.equal(prose.repair, null);
+});
+
 const FAKE_TOOLS = NAMES.map((name) => ({
   name,
   schema: { function: { name, description: `${name} description` } },
